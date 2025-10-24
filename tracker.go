@@ -19,34 +19,28 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 		log.Printf("[GRPC Tracker] Request - Method: %s, Payload: %+v\n", info.FullMethod, req)
 
-		// Modify request
-		/*
-			if r, ok := req.(*customerProto.GetProfileRequest); ok {
-				// override userId for testing
-				r.UserId = 999
-				req = r
-			}
-		*/
-
+		// Call actual handler
 		resp, err := handler(ctx, req)
+		if err != nil {
+			return resp, err
+		}
+
 		log.Println("Full method:", info.FullMethod)
 
-		// Modify response
+		// Dynamically override response but keep proto type
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
-			// Build generic response
-			genericResp := &trips.GenericResponse{
-				Status:  true,
-				Message: "Trip stats fetched dynamically",
-				Data: map[string]int64{
-					"acceptedTrips":   5000,
-					"canceledTrips":   23000,
-					"ongoingTrips":    3000,
-					"scheduledTrips":  8000,
-					"completedTrips":  16000,
-					"pendingRequests": 10000,
-				},
+			if r, ok := resp.(*trips.TripStatsResponse); ok {
+				// Override fields safely
+				r.Data.AcceptedTrips = 5000
+				r.Data.CanceledTrips = 23000
+				r.Data.OngoingTrips = 3000
+				r.Data.ScheduledTrips = 8000
+				r.Data.CompletedTrips = 16000
+				r.Data.PendingRequests = 10000
+
+				// Optionally override message
+				r.Message = "Trip stats fetched dynamically"
 			}
-			resp = genericResp
 		}
 
 		log.Printf("[GRPC Tracker] Response - Method: %s, Payload: %+v, Error: %v\n", info.FullMethod, resp, err)

@@ -21,29 +21,33 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GenericResponse struct {
+type FetchTripListingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Data          map[string]int64       `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	PerPage       int32                  `protobuf:"varint,2,opt,name=perPage,proto3" json:"perPage,omitempty"`
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	Search        string                 `protobuf:"bytes,4,opt,name=search,proto3" json:"search,omitempty"`
+	ZoneFilter    string                 `protobuf:"bytes,5,opt,name=zoneFilter,proto3" json:"zoneFilter,omitempty"`
+	TimeFilter    string                 `protobuf:"bytes,6,opt,name=timeFilter,proto3" json:"timeFilter,omitempty"`
+	CustomDate    string                 `protobuf:"bytes,7,opt,name=customDate,proto3" json:"customDate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenericResponse) Reset() {
-	*x = GenericResponse{}
+func (x *FetchTripListingRequest) Reset() {
+	*x = FetchTripListingRequest{}
 	mi := &file_proto_trips_trip_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenericResponse) String() string {
+func (x *FetchTripListingRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenericResponse) ProtoMessage() {}
+func (*FetchTripListingRequest) ProtoMessage() {}
 
-func (x *GenericResponse) ProtoReflect() protoreflect.Message {
+func (x *FetchTripListingRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_trips_trip_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,44 +59,2569 @@ func (x *GenericResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenericResponse.ProtoReflect.Descriptor instead.
-func (*GenericResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use FetchTripListingRequest.ProtoReflect.Descriptor instead.
+func (*FetchTripListingRequest) Descriptor() ([]byte, []int) {
 	return file_proto_trips_trip_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenericResponse) GetStatus() bool {
+func (x *FetchTripListingRequest) GetPage() int32 {
 	if x != nil {
-		return x.Status
+		return x.Page
 	}
-	return false
+	return 0
 }
 
-func (x *GenericResponse) GetMessage() string {
+func (x *FetchTripListingRequest) GetPerPage() int32 {
 	if x != nil {
-		return x.Message
+		return x.PerPage
+	}
+	return 0
+}
+
+func (x *FetchTripListingRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
 	}
 	return ""
 }
 
-func (x *GenericResponse) GetData() map[string]int64 {
+func (x *FetchTripListingRequest) GetSearch() string {
+	if x != nil {
+		return x.Search
+	}
+	return ""
+}
+
+func (x *FetchTripListingRequest) GetZoneFilter() string {
+	if x != nil {
+		return x.ZoneFilter
+	}
+	return ""
+}
+
+func (x *FetchTripListingRequest) GetTimeFilter() string {
+	if x != nil {
+		return x.TimeFilter
+	}
+	return ""
+}
+
+func (x *FetchTripListingRequest) GetCustomDate() string {
+	if x != nil {
+		return x.CustomDate
+	}
+	return ""
+}
+
+type TripListingResponse struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Data          *FetchTripListingResponse `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TripListingResponse) Reset() {
+	*x = TripListingResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripListingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripListingResponse) ProtoMessage() {}
+
+func (x *TripListingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripListingResponse.ProtoReflect.Descriptor instead.
+func (*TripListingResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *TripListingResponse) GetData() *FetchTripListingResponse {
 	if x != nil {
 		return x.Data
 	}
 	return nil
 }
 
+type FetchTripListingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         int32                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	PerPage       int32                  `protobuf:"varint,2,opt,name=perPage,proto3" json:"perPage,omitempty"`
+	CurrentPage   int32                  `protobuf:"varint,3,opt,name=currentPage,proto3" json:"currentPage,omitempty"`
+	TotalPages    int32                  `protobuf:"varint,4,opt,name=totalPages,proto3" json:"totalPages,omitempty"`
+	TripsRes      []*TripListingRes      `protobuf:"bytes,6,rep,name=tripsRes,proto3" json:"tripsRes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FetchTripListingResponse) Reset() {
+	*x = FetchTripListingResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FetchTripListingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FetchTripListingResponse) ProtoMessage() {}
+
+func (x *FetchTripListingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FetchTripListingResponse.ProtoReflect.Descriptor instead.
+func (*FetchTripListingResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *FetchTripListingResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *FetchTripListingResponse) GetPerPage() int32 {
+	if x != nil {
+		return x.PerPage
+	}
+	return 0
+}
+
+func (x *FetchTripListingResponse) GetCurrentPage() int32 {
+	if x != nil {
+		return x.CurrentPage
+	}
+	return 0
+}
+
+func (x *FetchTripListingResponse) GetTotalPages() int32 {
+	if x != nil {
+		return x.TotalPages
+	}
+	return 0
+}
+
+func (x *FetchTripListingResponse) GetTripsRes() []*TripListingRes {
+	if x != nil {
+		return x.TripsRes
+	}
+	return nil
+}
+
+type TripListingRes struct {
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	Id                     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TripId                 string                 `protobuf:"bytes,2,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	DateTime               string                 `protobuf:"bytes,3,opt,name=dateTime,proto3" json:"dateTime,omitempty"`
+	Customer               *CustomerDetails       `protobuf:"bytes,4,opt,name=customer,proto3" json:"customer,omitempty"`
+	Driver                 *DriverDetails         `protobuf:"bytes,5,opt,name=driver,proto3,oneof" json:"driver,omitempty"`
+	TripCost               float64                `protobuf:"fixed64,6,opt,name=tripCost,proto3" json:"tripCost,omitempty"`
+	Coupon                 *Coupon                `protobuf:"bytes,7,opt,name=coupon,proto3" json:"coupon,omitempty"`
+	AdditionalFees         *AdditionalFees        `protobuf:"bytes,8,opt,name=additionalFees,proto3" json:"additionalFees,omitempty"`
+	CancelledBy            *CancelledBy           `protobuf:"bytes,9,opt,name=cancelledBy,proto3,oneof" json:"cancelledBy,omitempty"`
+	TotalTripCost          float64                `protobuf:"fixed64,10,opt,name=totalTripCost,proto3" json:"totalTripCost,omitempty"`
+	AdminComission         float64                `protobuf:"fixed64,11,opt,name=adminComission,proto3" json:"adminComission,omitempty"`
+	TripPaymentStatus      string                 `protobuf:"bytes,12,opt,name=tripPaymentStatus,proto3" json:"tripPaymentStatus,omitempty"`
+	TripStatus             string                 `protobuf:"bytes,13,opt,name=tripStatus,proto3" json:"tripStatus,omitempty"`
+	Discount               *Discount              `protobuf:"bytes,14,opt,name=discount,proto3" json:"discount,omitempty"`
+	CustomerLocationsCount int64                  `protobuf:"varint,15,opt,name=customerLocationsCount,proto3" json:"customerLocationsCount,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *TripListingRes) Reset() {
+	*x = TripListingRes{}
+	mi := &file_proto_trips_trip_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripListingRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripListingRes) ProtoMessage() {}
+
+func (x *TripListingRes) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripListingRes.ProtoReflect.Descriptor instead.
+func (*TripListingRes) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TripListingRes) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TripListingRes) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *TripListingRes) GetDateTime() string {
+	if x != nil {
+		return x.DateTime
+	}
+	return ""
+}
+
+func (x *TripListingRes) GetCustomer() *CustomerDetails {
+	if x != nil {
+		return x.Customer
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetDriver() *DriverDetails {
+	if x != nil {
+		return x.Driver
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetTripCost() float64 {
+	if x != nil {
+		return x.TripCost
+	}
+	return 0
+}
+
+func (x *TripListingRes) GetCoupon() *Coupon {
+	if x != nil {
+		return x.Coupon
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetAdditionalFees() *AdditionalFees {
+	if x != nil {
+		return x.AdditionalFees
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetCancelledBy() *CancelledBy {
+	if x != nil {
+		return x.CancelledBy
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetTotalTripCost() float64 {
+	if x != nil {
+		return x.TotalTripCost
+	}
+	return 0
+}
+
+func (x *TripListingRes) GetAdminComission() float64 {
+	if x != nil {
+		return x.AdminComission
+	}
+	return 0
+}
+
+func (x *TripListingRes) GetTripPaymentStatus() string {
+	if x != nil {
+		return x.TripPaymentStatus
+	}
+	return ""
+}
+
+func (x *TripListingRes) GetTripStatus() string {
+	if x != nil {
+		return x.TripStatus
+	}
+	return ""
+}
+
+func (x *TripListingRes) GetDiscount() *Discount {
+	if x != nil {
+		return x.Discount
+	}
+	return nil
+}
+
+func (x *TripListingRes) GetCustomerLocationsCount() int64 {
+	if x != nil {
+		return x.CustomerLocationsCount
+	}
+	return 0
+}
+
+type AdditionalFees struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	TaxPercentage        float64                `protobuf:"fixed64,1,opt,name=TaxPercentage,proto3" json:"TaxPercentage,omitempty"`
+	TaxAmount            float64                `protobuf:"fixed64,2,opt,name=TaxAmount,proto3" json:"TaxAmount,omitempty"`
+	CancellationFees     *float64               `protobuf:"fixed64,3,opt,name=CancellationFees,proto3,oneof" json:"CancellationFees,omitempty"`
+	WaitingTimeInMinutes *float32               `protobuf:"fixed32,4,opt,name=WaitingTimeInMinutes,proto3,oneof" json:"WaitingTimeInMinutes,omitempty"`
+	DelayFees            *float64               `protobuf:"fixed64,5,opt,name=DelayFees,proto3,oneof" json:"DelayFees,omitempty"`
+	IdealTimeInMinutes   *float32               `protobuf:"fixed32,6,opt,name=IdealTimeInMinutes,proto3,oneof" json:"IdealTimeInMinutes,omitempty"`
+	IdealFees            *float64               `protobuf:"fixed64,7,opt,name=IdealFees,proto3,oneof" json:"IdealFees,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *AdditionalFees) Reset() {
+	*x = AdditionalFees{}
+	mi := &file_proto_trips_trip_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdditionalFees) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdditionalFees) ProtoMessage() {}
+
+func (x *AdditionalFees) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdditionalFees.ProtoReflect.Descriptor instead.
+func (*AdditionalFees) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *AdditionalFees) GetTaxPercentage() float64 {
+	if x != nil {
+		return x.TaxPercentage
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetTaxAmount() float64 {
+	if x != nil {
+		return x.TaxAmount
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetCancellationFees() float64 {
+	if x != nil && x.CancellationFees != nil {
+		return *x.CancellationFees
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetWaitingTimeInMinutes() float32 {
+	if x != nil && x.WaitingTimeInMinutes != nil {
+		return *x.WaitingTimeInMinutes
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetDelayFees() float64 {
+	if x != nil && x.DelayFees != nil {
+		return *x.DelayFees
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetIdealTimeInMinutes() float32 {
+	if x != nil && x.IdealTimeInMinutes != nil {
+		return *x.IdealTimeInMinutes
+	}
+	return 0
+}
+
+func (x *AdditionalFees) GetIdealFees() float64 {
+	if x != nil && x.IdealFees != nil {
+		return *x.IdealFees
+	}
+	return 0
+}
+
+type Discount struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Amount        float64                `protobuf:"fixed64,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Discount) Reset() {
+	*x = Discount{}
+	mi := &file_proto_trips_trip_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Discount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Discount) ProtoMessage() {}
+
+func (x *Discount) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Discount.ProtoReflect.Descriptor instead.
+func (*Discount) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Discount) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Discount) GetAmount() float64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+type Coupon struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CouponCode    string                 `protobuf:"bytes,1,opt,name=couponCode,proto3" json:"couponCode,omitempty"`
+	Percentage    float64                `protobuf:"fixed64,2,opt,name=percentage,proto3" json:"percentage,omitempty"`
+	Amount        float64                `protobuf:"fixed64,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Coupon) Reset() {
+	*x = Coupon{}
+	mi := &file_proto_trips_trip_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Coupon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Coupon) ProtoMessage() {}
+
+func (x *Coupon) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Coupon.ProtoReflect.Descriptor instead.
+func (*Coupon) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Coupon) GetCouponCode() string {
+	if x != nil {
+		return x.CouponCode
+	}
+	return ""
+}
+
+func (x *Coupon) GetPercentage() float64 {
+	if x != nil {
+		return x.Percentage
+	}
+	return 0
+}
+
+func (x *Coupon) GetAmount() float64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+type CustomerDetails struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=firstName,proto3" json:"firstName,omitempty"`
+	LastName      string                 `protobuf:"bytes,3,opt,name=lastName,proto3" json:"lastName,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CustomerDetails) Reset() {
+	*x = CustomerDetails{}
+	mi := &file_proto_trips_trip_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomerDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomerDetails) ProtoMessage() {}
+
+func (x *CustomerDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomerDetails.ProtoReflect.Descriptor instead.
+func (*CustomerDetails) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CustomerDetails) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CustomerDetails) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *CustomerDetails) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+type CancelledBy struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledBy) Reset() {
+	*x = CancelledBy{}
+	mi := &file_proto_trips_trip_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledBy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledBy) ProtoMessage() {}
+
+func (x *CancelledBy) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledBy.ProtoReflect.Descriptor instead.
+func (*CancelledBy) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CancelledBy) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CancelledBy) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+type DriverDetails struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=firstName,proto3" json:"firstName,omitempty"`
+	LastName      string                 `protobuf:"bytes,3,opt,name=lastName,proto3" json:"lastName,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DriverDetails) Reset() {
+	*x = DriverDetails{}
+	mi := &file_proto_trips_trip_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DriverDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DriverDetails) ProtoMessage() {}
+
+func (x *DriverDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DriverDetails.ProtoReflect.Descriptor instead.
+func (*DriverDetails) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DriverDetails) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DriverDetails) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *DriverDetails) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+type FetchTripDetailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	TripStatus    string                 `protobuf:"bytes,2,opt,name=tripStatus,proto3" json:"tripStatus,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FetchTripDetailRequest) Reset() {
+	*x = FetchTripDetailRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FetchTripDetailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FetchTripDetailRequest) ProtoMessage() {}
+
+func (x *FetchTripDetailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FetchTripDetailRequest.ProtoReflect.Descriptor instead.
+func (*FetchTripDetailRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *FetchTripDetailRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *FetchTripDetailRequest) GetTripStatus() string {
+	if x != nil {
+		return x.TripStatus
+	}
+	return ""
+}
+
+type FetchTripDetailResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Status          bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	Message         string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	CustomerDetails *CustomerDetailsRes    `protobuf:"bytes,3,opt,name=customerDetails,proto3" json:"customerDetails,omitempty"`
+	DriverDetails   *DriverDetailsRes      `protobuf:"bytes,4,opt,name=driverDetails,proto3" json:"driverDetails,omitempty"`
+	TripDetails     *TripDetails           `protobuf:"bytes,5,opt,name=tripDetails,proto3" json:"tripDetails,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *FetchTripDetailResponse) Reset() {
+	*x = FetchTripDetailResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FetchTripDetailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FetchTripDetailResponse) ProtoMessage() {}
+
+func (x *FetchTripDetailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FetchTripDetailResponse.ProtoReflect.Descriptor instead.
+func (*FetchTripDetailResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *FetchTripDetailResponse) GetStatus() bool {
+	if x != nil {
+		return x.Status
+	}
+	return false
+}
+
+func (x *FetchTripDetailResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *FetchTripDetailResponse) GetCustomerDetails() *CustomerDetailsRes {
+	if x != nil {
+		return x.CustomerDetails
+	}
+	return nil
+}
+
+func (x *FetchTripDetailResponse) GetDriverDetails() *DriverDetailsRes {
+	if x != nil {
+		return x.DriverDetails
+	}
+	return nil
+}
+
+func (x *FetchTripDetailResponse) GetTripDetails() *TripDetails {
+	if x != nil {
+		return x.TripDetails
+	}
+	return nil
+}
+
+type CustomerDetailsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Image         string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	FirstName     string                 `protobuf:"bytes,4,opt,name=firstName,proto3" json:"firstName,omitempty"`
+	LastName      string                 `protobuf:"bytes,5,opt,name=lastName,proto3" json:"lastName,omitempty"`
+	MobileNumber  *MobileNumber          `protobuf:"bytes,7,opt,name=mobileNumber,proto3" json:"mobileNumber,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CustomerDetailsRes) Reset() {
+	*x = CustomerDetailsRes{}
+	mi := &file_proto_trips_trip_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomerDetailsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomerDetailsRes) ProtoMessage() {}
+
+func (x *CustomerDetailsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomerDetailsRes.ProtoReflect.Descriptor instead.
+func (*CustomerDetailsRes) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CustomerDetailsRes) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CustomerDetailsRes) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *CustomerDetailsRes) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *CustomerDetailsRes) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *CustomerDetailsRes) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *CustomerDetailsRes) GetMobileNumber() *MobileNumber {
+	if x != nil {
+		return x.MobileNumber
+	}
+	return nil
+}
+
+type MobileNumber struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DialCode      string                 `protobuf:"bytes,1,opt,name=dialCode,proto3" json:"dialCode,omitempty"`
+	Number        string                 `protobuf:"bytes,2,opt,name=number,proto3" json:"number,omitempty"`
+	FlagCode      string                 `protobuf:"bytes,3,opt,name=flagCode,proto3" json:"flagCode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MobileNumber) Reset() {
+	*x = MobileNumber{}
+	mi := &file_proto_trips_trip_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MobileNumber) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MobileNumber) ProtoMessage() {}
+
+func (x *MobileNumber) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MobileNumber.ProtoReflect.Descriptor instead.
+func (*MobileNumber) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *MobileNumber) GetDialCode() string {
+	if x != nil {
+		return x.DialCode
+	}
+	return ""
+}
+
+func (x *MobileNumber) GetNumber() string {
+	if x != nil {
+		return x.Number
+	}
+	return ""
+}
+
+func (x *MobileNumber) GetFlagCode() string {
+	if x != nil {
+		return x.FlagCode
+	}
+	return ""
+}
+
+type DriverDetailsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Image         string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	FirstName     string                 `protobuf:"bytes,4,opt,name=firstName,proto3" json:"firstName,omitempty"`
+	LastName      string                 `protobuf:"bytes,5,opt,name=lastName,proto3" json:"lastName,omitempty"`
+	MobileNumber  *MobileNumber          `protobuf:"bytes,7,opt,name=mobileNumber,proto3" json:"mobileNumber,omitempty"`
+	VehicleImage  string                 `protobuf:"bytes,8,opt,name=vehicleImage,proto3" json:"vehicleImage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DriverDetailsRes) Reset() {
+	*x = DriverDetailsRes{}
+	mi := &file_proto_trips_trip_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DriverDetailsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DriverDetailsRes) ProtoMessage() {}
+
+func (x *DriverDetailsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DriverDetailsRes.ProtoReflect.Descriptor instead.
+func (*DriverDetailsRes) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *DriverDetailsRes) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DriverDetailsRes) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *DriverDetailsRes) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *DriverDetailsRes) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
+}
+
+func (x *DriverDetailsRes) GetLastName() string {
+	if x != nil {
+		return x.LastName
+	}
+	return ""
+}
+
+func (x *DriverDetailsRes) GetMobileNumber() *MobileNumber {
+	if x != nil {
+		return x.MobileNumber
+	}
+	return nil
+}
+
+func (x *DriverDetailsRes) GetVehicleImage() string {
+	if x != nil {
+		return x.VehicleImage
+	}
+	return ""
+}
+
+type TripDetails struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	TripId            string                 `protobuf:"bytes,2,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	Location          []*Locations           `protobuf:"bytes,3,rep,name=location,proto3" json:"location,omitempty"`
+	Coordinate        []*PolyLines           `protobuf:"bytes,4,rep,name=coordinate,proto3" json:"coordinate,omitempty"`
+	DistanceInKm      float32                `protobuf:"fixed32,5,opt,name=distanceInKm,proto3" json:"distanceInKm,omitempty"`
+	DistanceInMinutes float32                `protobuf:"fixed32,6,opt,name=distanceInMinutes,proto3" json:"distanceInMinutes,omitempty"`
+	BookingDateTime   string                 `protobuf:"bytes,7,opt,name=bookingDateTime,proto3" json:"bookingDateTime,omitempty"`
+	TripStatus        string                 `protobuf:"bytes,8,opt,name=tripStatus,proto3" json:"tripStatus,omitempty"`
+	TripPaymentStatus string                 `protobuf:"bytes,10,opt,name=tripPaymentStatus,proto3" json:"tripPaymentStatus,omitempty"`
+	TripPaymentType   string                 `protobuf:"bytes,11,opt,name=tripPaymentType,proto3" json:"tripPaymentType,omitempty"`
+	TripSummary       *TripSummary           `protobuf:"bytes,12,opt,name=tripSummary,proto3" json:"tripSummary,omitempty"`
+	CancelledReason   *string                `protobuf:"bytes,13,opt,name=cancelledReason,proto3,oneof" json:"cancelledReason,omitempty"`
+	CancelledBy       *string                `protobuf:"bytes,14,opt,name=cancelledBy,proto3,oneof" json:"cancelledBy,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *TripDetails) Reset() {
+	*x = TripDetails{}
+	mi := &file_proto_trips_trip_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripDetails) ProtoMessage() {}
+
+func (x *TripDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripDetails.ProtoReflect.Descriptor instead.
+func (*TripDetails) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *TripDetails) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TripDetails) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *TripDetails) GetLocation() []*Locations {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
+func (x *TripDetails) GetCoordinate() []*PolyLines {
+	if x != nil {
+		return x.Coordinate
+	}
+	return nil
+}
+
+func (x *TripDetails) GetDistanceInKm() float32 {
+	if x != nil {
+		return x.DistanceInKm
+	}
+	return 0
+}
+
+func (x *TripDetails) GetDistanceInMinutes() float32 {
+	if x != nil {
+		return x.DistanceInMinutes
+	}
+	return 0
+}
+
+func (x *TripDetails) GetBookingDateTime() string {
+	if x != nil {
+		return x.BookingDateTime
+	}
+	return ""
+}
+
+func (x *TripDetails) GetTripStatus() string {
+	if x != nil {
+		return x.TripStatus
+	}
+	return ""
+}
+
+func (x *TripDetails) GetTripPaymentStatus() string {
+	if x != nil {
+		return x.TripPaymentStatus
+	}
+	return ""
+}
+
+func (x *TripDetails) GetTripPaymentType() string {
+	if x != nil {
+		return x.TripPaymentType
+	}
+	return ""
+}
+
+func (x *TripDetails) GetTripSummary() *TripSummary {
+	if x != nil {
+		return x.TripSummary
+	}
+	return nil
+}
+
+func (x *TripDetails) GetCancelledReason() string {
+	if x != nil && x.CancelledReason != nil {
+		return *x.CancelledReason
+	}
+	return ""
+}
+
+func (x *TripDetails) GetCancelledBy() string {
+	if x != nil && x.CancelledBy != nil {
+		return *x.CancelledBy
+	}
+	return ""
+}
+
+type TripSummary struct {
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	BaseFare                    float64                `protobuf:"fixed64,1,opt,name=BaseFare,proto3" json:"BaseFare,omitempty"`
+	FarePerKm                   float64                `protobuf:"fixed64,2,opt,name=FarePerKm,proto3" json:"FarePerKm,omitempty"`
+	FareTotalKm                 float64                `protobuf:"fixed64,3,opt,name=FareTotalKm,proto3" json:"FareTotalKm,omitempty"`
+	TaxPercentage               float64                `protobuf:"fixed64,4,opt,name=TaxPercentage,proto3" json:"TaxPercentage,omitempty"`
+	TaxAmount                   float64                `protobuf:"fixed64,5,opt,name=TaxAmount,proto3" json:"TaxAmount,omitempty"`
+	Coupon                      *Coupon                `protobuf:"bytes,6,opt,name=coupon,proto3,oneof" json:"coupon,omitempty"`
+	Discount                    *Discount              `protobuf:"bytes,7,opt,name=discount,proto3,oneof" json:"discount,omitempty"`
+	WaitingTimeInMinutes        *float32               `protobuf:"fixed32,8,opt,name=WaitingTimeInMinutes,proto3,oneof" json:"WaitingTimeInMinutes,omitempty"`
+	DelayFees                   *float64               `protobuf:"fixed64,9,opt,name=DelayFees,proto3,oneof" json:"DelayFees,omitempty"`
+	IdealTimeInMinutes          *float32               `protobuf:"fixed32,10,opt,name=IdealTimeInMinutes,proto3,oneof" json:"IdealTimeInMinutes,omitempty"`
+	IdealFees                   *float64               `protobuf:"fixed64,11,opt,name=IdealFees,proto3,oneof" json:"IdealFees,omitempty"`
+	AdminCommissionInPercentage float64                `protobuf:"fixed64,12,opt,name=AdminCommissionInPercentage,proto3" json:"AdminCommissionInPercentage,omitempty"`
+	TotalTripAmount             float64                `protobuf:"fixed64,13,opt,name=TotalTripAmount,proto3" json:"TotalTripAmount,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *TripSummary) Reset() {
+	*x = TripSummary{}
+	mi := &file_proto_trips_trip_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripSummary) ProtoMessage() {}
+
+func (x *TripSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripSummary.ProtoReflect.Descriptor instead.
+func (*TripSummary) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TripSummary) GetBaseFare() float64 {
+	if x != nil {
+		return x.BaseFare
+	}
+	return 0
+}
+
+func (x *TripSummary) GetFarePerKm() float64 {
+	if x != nil {
+		return x.FarePerKm
+	}
+	return 0
+}
+
+func (x *TripSummary) GetFareTotalKm() float64 {
+	if x != nil {
+		return x.FareTotalKm
+	}
+	return 0
+}
+
+func (x *TripSummary) GetTaxPercentage() float64 {
+	if x != nil {
+		return x.TaxPercentage
+	}
+	return 0
+}
+
+func (x *TripSummary) GetTaxAmount() float64 {
+	if x != nil {
+		return x.TaxAmount
+	}
+	return 0
+}
+
+func (x *TripSummary) GetCoupon() *Coupon {
+	if x != nil {
+		return x.Coupon
+	}
+	return nil
+}
+
+func (x *TripSummary) GetDiscount() *Discount {
+	if x != nil {
+		return x.Discount
+	}
+	return nil
+}
+
+func (x *TripSummary) GetWaitingTimeInMinutes() float32 {
+	if x != nil && x.WaitingTimeInMinutes != nil {
+		return *x.WaitingTimeInMinutes
+	}
+	return 0
+}
+
+func (x *TripSummary) GetDelayFees() float64 {
+	if x != nil && x.DelayFees != nil {
+		return *x.DelayFees
+	}
+	return 0
+}
+
+func (x *TripSummary) GetIdealTimeInMinutes() float32 {
+	if x != nil && x.IdealTimeInMinutes != nil {
+		return *x.IdealTimeInMinutes
+	}
+	return 0
+}
+
+func (x *TripSummary) GetIdealFees() float64 {
+	if x != nil && x.IdealFees != nil {
+		return *x.IdealFees
+	}
+	return 0
+}
+
+func (x *TripSummary) GetAdminCommissionInPercentage() float64 {
+	if x != nil {
+		return x.AdminCommissionInPercentage
+	}
+	return 0
+}
+
+func (x *TripSummary) GetTotalTripAmount() float64 {
+	if x != nil {
+		return x.TotalTripAmount
+	}
+	return 0
+}
+
+type Locations struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Coordinates   []float64              `protobuf:"fixed64,1,rep,packed,name=coordinates,proto3" json:"coordinates,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Add           string                 `protobuf:"bytes,3,opt,name=add,proto3" json:"add,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Locations) Reset() {
+	*x = Locations{}
+	mi := &file_proto_trips_trip_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Locations) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Locations) ProtoMessage() {}
+
+func (x *Locations) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Locations.ProtoReflect.Descriptor instead.
+func (*Locations) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *Locations) GetCoordinates() []float64 {
+	if x != nil {
+		return x.Coordinates
+	}
+	return nil
+}
+
+func (x *Locations) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *Locations) GetAdd() string {
+	if x != nil {
+		return x.Add
+	}
+	return ""
+}
+
+type PolyLines struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng           float64                `protobuf:"fixed64,2,opt,name=lng,proto3" json:"lng,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolyLines) Reset() {
+	*x = PolyLines{}
+	mi := &file_proto_trips_trip_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolyLines) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolyLines) ProtoMessage() {}
+
+func (x *PolyLines) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolyLines.ProtoReflect.Descriptor instead.
+func (*PolyLines) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *PolyLines) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *PolyLines) GetLng() float64 {
+	if x != nil {
+		return x.Lng
+	}
+	return 0
+}
+
+type CancelBookingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	AdminId       string                 `protobuf:"bytes,2,opt,name=adminId,proto3" json:"adminId,omitempty"`
+	CancelReason  string                 `protobuf:"bytes,3,opt,name=cancelReason,proto3" json:"cancelReason,omitempty"`
+	Tag           string                 `protobuf:"bytes,4,opt,name=tag,proto3" json:"tag,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelBookingRequest) Reset() {
+	*x = CancelBookingRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelBookingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelBookingRequest) ProtoMessage() {}
+
+func (x *CancelBookingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelBookingRequest.ProtoReflect.Descriptor instead.
+func (*CancelBookingRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CancelBookingRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *CancelBookingRequest) GetAdminId() string {
+	if x != nil {
+		return x.AdminId
+	}
+	return ""
+}
+
+func (x *CancelBookingRequest) GetCancelReason() string {
+	if x != nil {
+		return x.CancelReason
+	}
+	return ""
+}
+
+func (x *CancelBookingRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
+}
+
+type CancelBookingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelBookingResponse) Reset() {
+	*x = CancelBookingResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelBookingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelBookingResponse) ProtoMessage() {}
+
+func (x *CancelBookingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelBookingResponse.ProtoReflect.Descriptor instead.
+func (*CancelBookingResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *CancelBookingResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type AssignDriverToTripByAdminRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AdminId       string                 `protobuf:"bytes,1,opt,name=adminId,proto3" json:"adminId,omitempty"`
+	TripId        string                 `protobuf:"bytes,2,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	DriverId      string                 `protobuf:"bytes,3,opt,name=driverId,proto3" json:"driverId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignDriverToTripByAdminRequest) Reset() {
+	*x = AssignDriverToTripByAdminRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignDriverToTripByAdminRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignDriverToTripByAdminRequest) ProtoMessage() {}
+
+func (x *AssignDriverToTripByAdminRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignDriverToTripByAdminRequest.ProtoReflect.Descriptor instead.
+func (*AssignDriverToTripByAdminRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *AssignDriverToTripByAdminRequest) GetAdminId() string {
+	if x != nil {
+		return x.AdminId
+	}
+	return ""
+}
+
+func (x *AssignDriverToTripByAdminRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+func (x *AssignDriverToTripByAdminRequest) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+type AssignDriverToTripByAdminResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignDriverToTripByAdminResponse) Reset() {
+	*x = AssignDriverToTripByAdminResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignDriverToTripByAdminResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignDriverToTripByAdminResponse) ProtoMessage() {}
+
+func (x *AssignDriverToTripByAdminResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignDriverToTripByAdminResponse.ProtoReflect.Descriptor instead.
+func (*AssignDriverToTripByAdminResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AssignDriverToTripByAdminResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type FindSuitableDriversForTripRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripId        string                 `protobuf:"bytes,1,opt,name=tripId,proto3" json:"tripId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FindSuitableDriversForTripRequest) Reset() {
+	*x = FindSuitableDriversForTripRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindSuitableDriversForTripRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindSuitableDriversForTripRequest) ProtoMessage() {}
+
+func (x *FindSuitableDriversForTripRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindSuitableDriversForTripRequest.ProtoReflect.Descriptor instead.
+func (*FindSuitableDriversForTripRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *FindSuitableDriversForTripRequest) GetTripId() string {
+	if x != nil {
+		return x.TripId
+	}
+	return ""
+}
+
+type FindSuitableDriversForTripResponse struct {
+	state                  protoimpl.MessageState   `protogen:"open.v1"`
+	SuitableDriverForTrips []*SuitableDriverForTrip `protobuf:"bytes,1,rep,name=suitableDriverForTrips,proto3" json:"suitableDriverForTrips,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *FindSuitableDriversForTripResponse) Reset() {
+	*x = FindSuitableDriversForTripResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindSuitableDriversForTripResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindSuitableDriversForTripResponse) ProtoMessage() {}
+
+func (x *FindSuitableDriversForTripResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindSuitableDriversForTripResponse.ProtoReflect.Descriptor instead.
+func (*FindSuitableDriversForTripResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *FindSuitableDriversForTripResponse) GetSuitableDriverForTrips() []*SuitableDriverForTrip {
+	if x != nil {
+		return x.SuitableDriverForTrips
+	}
+	return nil
+}
+
+type SuitableDriverForTrip struct {
+	state                        protoimpl.MessageState `protogen:"open.v1"`
+	DriverId                     string                 `protobuf:"bytes,1,opt,name=driverId,proto3" json:"driverId,omitempty"`
+	DriverFirstName              string                 `protobuf:"bytes,2,opt,name=driverFirstName,proto3" json:"driverFirstName,omitempty"`
+	DriverLastName               string                 `protobuf:"bytes,3,opt,name=driverLastName,proto3" json:"driverLastName,omitempty"`
+	NumberPlate                  string                 `protobuf:"bytes,4,opt,name=numberPlate,proto3" json:"numberPlate,omitempty"`
+	PetPermission                string                 `protobuf:"bytes,5,opt,name=petPermission,proto3" json:"petPermission,omitempty"`
+	DriverType                   string                 `protobuf:"bytes,6,opt,name=driverType,proto3" json:"driverType,omitempty"`
+	AllQueueAndOngoingTripsCount int32                  `protobuf:"varint,7,opt,name=allQueueAndOngoingTripsCount,proto3" json:"allQueueAndOngoingTripsCount,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *SuitableDriverForTrip) Reset() {
+	*x = SuitableDriverForTrip{}
+	mi := &file_proto_trips_trip_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuitableDriverForTrip) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuitableDriverForTrip) ProtoMessage() {}
+
+func (x *SuitableDriverForTrip) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuitableDriverForTrip.ProtoReflect.Descriptor instead.
+func (*SuitableDriverForTrip) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *SuitableDriverForTrip) GetDriverId() string {
+	if x != nil {
+		return x.DriverId
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetDriverFirstName() string {
+	if x != nil {
+		return x.DriverFirstName
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetDriverLastName() string {
+	if x != nil {
+		return x.DriverLastName
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetNumberPlate() string {
+	if x != nil {
+		return x.NumberPlate
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetPetPermission() string {
+	if x != nil {
+		return x.PetPermission
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetDriverType() string {
+	if x != nil {
+		return x.DriverType
+	}
+	return ""
+}
+
+func (x *SuitableDriverForTrip) GetAllQueueAndOngoingTripsCount() int32 {
+	if x != nil {
+		return x.AllQueueAndOngoingTripsCount
+	}
+	return 0
+}
+
+type TripStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ZoneFilter    string                 `protobuf:"bytes,1,opt,name=zoneFilter,proto3" json:"zoneFilter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TripStatsRequest) Reset() {
+	*x = TripStatsRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripStatsRequest) ProtoMessage() {}
+
+func (x *TripStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripStatsRequest.ProtoReflect.Descriptor instead.
+func (*TripStatsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *TripStatsRequest) GetZoneFilter() string {
+	if x != nil {
+		return x.ZoneFilter
+	}
+	return ""
+}
+
+type TripStatsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Data          *TripStats             `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TripStatsResponse) Reset() {
+	*x = TripStatsResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripStatsResponse) ProtoMessage() {}
+
+func (x *TripStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripStatsResponse.ProtoReflect.Descriptor instead.
+func (*TripStatsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *TripStatsResponse) GetStatus() bool {
+	if x != nil {
+		return x.Status
+	}
+	return false
+}
+
+func (x *TripStatsResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TripStatsResponse) GetData() *TripStats {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type TripStats struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PendingRequests int64                  `protobuf:"varint,1,opt,name=pendingRequests,proto3" json:"pendingRequests,omitempty"`
+	AcceptedTrips   int64                  `protobuf:"varint,2,opt,name=acceptedTrips,proto3" json:"acceptedTrips,omitempty"`
+	OngoingTrips    int64                  `protobuf:"varint,3,opt,name=ongoingTrips,proto3" json:"ongoingTrips,omitempty"`
+	ScheduledTrips  int64                  `protobuf:"varint,4,opt,name=scheduledTrips,proto3" json:"scheduledTrips,omitempty"`
+	CompletedTrips  int64                  `protobuf:"varint,5,opt,name=completedTrips,proto3" json:"completedTrips,omitempty"`
+	CanceledTrips   int64                  `protobuf:"varint,6,opt,name=canceledTrips,proto3" json:"canceledTrips,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *TripStats) Reset() {
+	*x = TripStats{}
+	mi := &file_proto_trips_trip_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TripStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TripStats) ProtoMessage() {}
+
+func (x *TripStats) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TripStats.ProtoReflect.Descriptor instead.
+func (*TripStats) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *TripStats) GetPendingRequests() int64 {
+	if x != nil {
+		return x.PendingRequests
+	}
+	return 0
+}
+
+func (x *TripStats) GetAcceptedTrips() int64 {
+	if x != nil {
+		return x.AcceptedTrips
+	}
+	return 0
+}
+
+func (x *TripStats) GetOngoingTrips() int64 {
+	if x != nil {
+		return x.OngoingTrips
+	}
+	return 0
+}
+
+func (x *TripStats) GetScheduledTrips() int64 {
+	if x != nil {
+		return x.ScheduledTrips
+	}
+	return 0
+}
+
+func (x *TripStats) GetCompletedTrips() int64 {
+	if x != nil {
+		return x.CompletedTrips
+	}
+	return 0
+}
+
+func (x *TripStats) GetCanceledTrips() int64 {
+	if x != nil {
+		return x.CanceledTrips
+	}
+	return 0
+}
+
+type CancelledTripStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ZoneFilter    string                 `protobuf:"bytes,1,opt,name=zoneFilter,proto3" json:"zoneFilter,omitempty"`
+	TimeFilter    string                 `protobuf:"bytes,2,opt,name=timeFilter,proto3" json:"timeFilter,omitempty"`
+	CustomDate    string                 `protobuf:"bytes,3,opt,name=customDate,proto3" json:"customDate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledTripStatsRequest) Reset() {
+	*x = CancelledTripStatsRequest{}
+	mi := &file_proto_trips_trip_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledTripStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledTripStatsRequest) ProtoMessage() {}
+
+func (x *CancelledTripStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledTripStatsRequest.ProtoReflect.Descriptor instead.
+func (*CancelledTripStatsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *CancelledTripStatsRequest) GetZoneFilter() string {
+	if x != nil {
+		return x.ZoneFilter
+	}
+	return ""
+}
+
+func (x *CancelledTripStatsRequest) GetTimeFilter() string {
+	if x != nil {
+		return x.TimeFilter
+	}
+	return ""
+}
+
+func (x *CancelledTripStatsRequest) GetCustomDate() string {
+	if x != nil {
+		return x.CustomDate
+	}
+	return ""
+}
+
+type CancelledTripStatsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Data          *CancelledTripStats    `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledTripStatsResponse) Reset() {
+	*x = CancelledTripStatsResponse{}
+	mi := &file_proto_trips_trip_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledTripStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledTripStatsResponse) ProtoMessage() {}
+
+func (x *CancelledTripStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledTripStatsResponse.ProtoReflect.Descriptor instead.
+func (*CancelledTripStatsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *CancelledTripStatsResponse) GetStatus() bool {
+	if x != nil {
+		return x.Status
+	}
+	return false
+}
+
+func (x *CancelledTripStatsResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *CancelledTripStatsResponse) GetData() *CancelledTripStats {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type CancelledTripStats struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*CancelledTripGroup  `protobuf:"bytes,2,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledTripStats) Reset() {
+	*x = CancelledTripStats{}
+	mi := &file_proto_trips_trip_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledTripStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledTripStats) ProtoMessage() {}
+
+func (x *CancelledTripStats) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledTripStats.ProtoReflect.Descriptor instead.
+func (*CancelledTripStats) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *CancelledTripStats) GetList() []*CancelledTripGroup {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type CancelledTripGroup struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CancelBy      string                 `protobuf:"bytes,1,opt,name=cancelBy,proto3" json:"cancelBy,omitempty"`
+	TotalCancel   int32                  `protobuf:"varint,2,opt,name=totalCancel,proto3" json:"totalCancel,omitempty"`
+	Tags          []*CancelTag           `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelledTripGroup) Reset() {
+	*x = CancelledTripGroup{}
+	mi := &file_proto_trips_trip_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelledTripGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelledTripGroup) ProtoMessage() {}
+
+func (x *CancelledTripGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelledTripGroup.ProtoReflect.Descriptor instead.
+func (*CancelledTripGroup) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *CancelledTripGroup) GetCancelBy() string {
+	if x != nil {
+		return x.CancelBy
+	}
+	return ""
+}
+
+func (x *CancelledTripGroup) GetTotalCancel() int32 {
+	if x != nil {
+		return x.TotalCancel
+	}
+	return 0
+}
+
+func (x *CancelledTripGroup) GetTags() []*CancelTag {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+type CancelTag struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	TotalCancel   int32                  `protobuf:"varint,2,opt,name=totalCancel,proto3" json:"totalCancel,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelTag) Reset() {
+	*x = CancelTag{}
+	mi := &file_proto_trips_trip_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelTag) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelTag) ProtoMessage() {}
+
+func (x *CancelTag) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_trips_trip_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelTag.ProtoReflect.Descriptor instead.
+func (*CancelTag) Descriptor() ([]byte, []int) {
+	return file_proto_trips_trip_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *CancelTag) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CancelTag) GetTotalCancel() int32 {
+	if x != nil {
+		return x.TotalCancel
+	}
+	return 0
+}
+
 var File_proto_trips_trip_proto protoreflect.FileDescriptor
 
 const file_proto_trips_trip_proto_rawDesc = "" +
 	"\n" +
-	"\x16proto/trips/trip.proto\x12\x13trackerGenericProto\"\xc0\x01\n" +
-	"\x0fGenericResponse\x12\x16\n" +
+	"\x16proto/trips/trip.proto\x12\ttripProto\"\xd7\x01\n" +
+	"\x17FetchTripListingRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x18\n" +
+	"\aperPage\x18\x02 \x01(\x05R\aperPage\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12\x16\n" +
+	"\x06search\x18\x04 \x01(\tR\x06search\x12\x1e\n" +
+	"\n" +
+	"zoneFilter\x18\x05 \x01(\tR\n" +
+	"zoneFilter\x12\x1e\n" +
+	"\n" +
+	"timeFilter\x18\x06 \x01(\tR\n" +
+	"timeFilter\x12\x1e\n" +
+	"\n" +
+	"customDate\x18\a \x01(\tR\n" +
+	"customDate\"N\n" +
+	"\x13TripListingResponse\x127\n" +
+	"\x04data\x18\x01 \x01(\v2#.tripProto.FetchTripListingResponseR\x04data\"\xc3\x01\n" +
+	"\x18FetchTripListingResponse\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x05R\x05total\x12\x18\n" +
+	"\aperPage\x18\x02 \x01(\x05R\aperPage\x12 \n" +
+	"\vcurrentPage\x18\x03 \x01(\x05R\vcurrentPage\x12\x1e\n" +
+	"\n" +
+	"totalPages\x18\x04 \x01(\x05R\n" +
+	"totalPages\x125\n" +
+	"\btripsRes\x18\x06 \x03(\v2\x19.tripProto.TripListingResR\btripsRes\"\xac\x05\n" +
+	"\x0eTripListingRes\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x12\x1a\n" +
+	"\bdateTime\x18\x03 \x01(\tR\bdateTime\x126\n" +
+	"\bcustomer\x18\x04 \x01(\v2\x1a.tripProto.CustomerDetailsR\bcustomer\x125\n" +
+	"\x06driver\x18\x05 \x01(\v2\x18.tripProto.DriverDetailsH\x00R\x06driver\x88\x01\x01\x12\x1a\n" +
+	"\btripCost\x18\x06 \x01(\x01R\btripCost\x12)\n" +
+	"\x06coupon\x18\a \x01(\v2\x11.tripProto.CouponR\x06coupon\x12A\n" +
+	"\x0eadditionalFees\x18\b \x01(\v2\x19.tripProto.AdditionalFeesR\x0eadditionalFees\x12=\n" +
+	"\vcancelledBy\x18\t \x01(\v2\x16.tripProto.CancelledByH\x01R\vcancelledBy\x88\x01\x01\x12$\n" +
+	"\rtotalTripCost\x18\n" +
+	" \x01(\x01R\rtotalTripCost\x12&\n" +
+	"\x0eadminComission\x18\v \x01(\x01R\x0eadminComission\x12,\n" +
+	"\x11tripPaymentStatus\x18\f \x01(\tR\x11tripPaymentStatus\x12\x1e\n" +
+	"\n" +
+	"tripStatus\x18\r \x01(\tR\n" +
+	"tripStatus\x12/\n" +
+	"\bdiscount\x18\x0e \x01(\v2\x13.tripProto.DiscountR\bdiscount\x126\n" +
+	"\x16customerLocationsCount\x18\x0f \x01(\x03R\x16customerLocationsCountB\t\n" +
+	"\a_driverB\x0e\n" +
+	"\f_cancelledBy\"\x9a\x03\n" +
+	"\x0eAdditionalFees\x12$\n" +
+	"\rTaxPercentage\x18\x01 \x01(\x01R\rTaxPercentage\x12\x1c\n" +
+	"\tTaxAmount\x18\x02 \x01(\x01R\tTaxAmount\x12/\n" +
+	"\x10CancellationFees\x18\x03 \x01(\x01H\x00R\x10CancellationFees\x88\x01\x01\x127\n" +
+	"\x14WaitingTimeInMinutes\x18\x04 \x01(\x02H\x01R\x14WaitingTimeInMinutes\x88\x01\x01\x12!\n" +
+	"\tDelayFees\x18\x05 \x01(\x01H\x02R\tDelayFees\x88\x01\x01\x123\n" +
+	"\x12IdealTimeInMinutes\x18\x06 \x01(\x02H\x03R\x12IdealTimeInMinutes\x88\x01\x01\x12!\n" +
+	"\tIdealFees\x18\a \x01(\x01H\x04R\tIdealFees\x88\x01\x01B\x13\n" +
+	"\x11_CancellationFeesB\x17\n" +
+	"\x15_WaitingTimeInMinutesB\f\n" +
+	"\n" +
+	"_DelayFeesB\x15\n" +
+	"\x13_IdealTimeInMinutesB\f\n" +
+	"\n" +
+	"_IdealFees\"2\n" +
+	"\bDiscount\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x01R\x06amount\"`\n" +
+	"\x06Coupon\x12\x1e\n" +
+	"\n" +
+	"couponCode\x18\x01 \x01(\tR\n" +
+	"couponCode\x12\x1e\n" +
+	"\n" +
+	"percentage\x18\x02 \x01(\x01R\n" +
+	"percentage\x12\x16\n" +
+	"\x06amount\x18\x03 \x01(\x01R\x06amount\"[\n" +
+	"\x0fCustomerDetails\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tfirstName\x18\x02 \x01(\tR\tfirstName\x12\x1a\n" +
+	"\blastName\x18\x03 \x01(\tR\blastName\"1\n" +
+	"\vCancelledBy\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\"Y\n" +
+	"\rDriverDetails\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tfirstName\x18\x02 \x01(\tR\tfirstName\x12\x1a\n" +
+	"\blastName\x18\x03 \x01(\tR\blastName\"P\n" +
+	"\x16FetchTripDetailRequest\x12\x16\n" +
+	"\x06tripId\x18\x01 \x01(\tR\x06tripId\x12\x1e\n" +
+	"\n" +
+	"tripStatus\x18\x02 \x01(\tR\n" +
+	"tripStatus\"\x91\x02\n" +
+	"\x17FetchTripDetailResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12B\n" +
-	"\x04data\x18\x03 \x03(\v2..trackerGenericProto.GenericResponse.DataEntryR\x04data\x1a7\n" +
-	"\tDataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01B\rZ\vproto/tripsb\x06proto3"
+	"\amessage\x18\x02 \x01(\tR\amessage\x12G\n" +
+	"\x0fcustomerDetails\x18\x03 \x01(\v2\x1d.tripProto.CustomerDetailsResR\x0fcustomerDetails\x12A\n" +
+	"\rdriverDetails\x18\x04 \x01(\v2\x1b.tripProto.DriverDetailsResR\rdriverDetails\x128\n" +
+	"\vtripDetails\x18\x05 \x01(\v2\x16.tripProto.TripDetailsR\vtripDetails\"\xc7\x01\n" +
+	"\x12CustomerDetailsRes\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1c\n" +
+	"\tfirstName\x18\x04 \x01(\tR\tfirstName\x12\x1a\n" +
+	"\blastName\x18\x05 \x01(\tR\blastName\x12;\n" +
+	"\fmobileNumber\x18\a \x01(\v2\x17.tripProto.MobileNumberR\fmobileNumber\"^\n" +
+	"\fMobileNumber\x12\x1a\n" +
+	"\bdialCode\x18\x01 \x01(\tR\bdialCode\x12\x16\n" +
+	"\x06number\x18\x02 \x01(\tR\x06number\x12\x1a\n" +
+	"\bflagCode\x18\x03 \x01(\tR\bflagCode\"\xe9\x01\n" +
+	"\x10DriverDetailsRes\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1c\n" +
+	"\tfirstName\x18\x04 \x01(\tR\tfirstName\x12\x1a\n" +
+	"\blastName\x18\x05 \x01(\tR\blastName\x12;\n" +
+	"\fmobileNumber\x18\a \x01(\v2\x17.tripProto.MobileNumberR\fmobileNumber\x12\"\n" +
+	"\fvehicleImage\x18\b \x01(\tR\fvehicleImage\"\xc5\x04\n" +
+	"\vTripDetails\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x120\n" +
+	"\blocation\x18\x03 \x03(\v2\x14.tripProto.LocationsR\blocation\x124\n" +
+	"\n" +
+	"coordinate\x18\x04 \x03(\v2\x14.tripProto.PolyLinesR\n" +
+	"coordinate\x12\"\n" +
+	"\fdistanceInKm\x18\x05 \x01(\x02R\fdistanceInKm\x12,\n" +
+	"\x11distanceInMinutes\x18\x06 \x01(\x02R\x11distanceInMinutes\x12(\n" +
+	"\x0fbookingDateTime\x18\a \x01(\tR\x0fbookingDateTime\x12\x1e\n" +
+	"\n" +
+	"tripStatus\x18\b \x01(\tR\n" +
+	"tripStatus\x12,\n" +
+	"\x11tripPaymentStatus\x18\n" +
+	" \x01(\tR\x11tripPaymentStatus\x12(\n" +
+	"\x0ftripPaymentType\x18\v \x01(\tR\x0ftripPaymentType\x128\n" +
+	"\vtripSummary\x18\f \x01(\v2\x16.tripProto.TripSummaryR\vtripSummary\x12-\n" +
+	"\x0fcancelledReason\x18\r \x01(\tH\x00R\x0fcancelledReason\x88\x01\x01\x12%\n" +
+	"\vcancelledBy\x18\x0e \x01(\tH\x01R\vcancelledBy\x88\x01\x01B\x12\n" +
+	"\x10_cancelledReasonB\x0e\n" +
+	"\f_cancelledBy\"\x97\x05\n" +
+	"\vTripSummary\x12\x1a\n" +
+	"\bBaseFare\x18\x01 \x01(\x01R\bBaseFare\x12\x1c\n" +
+	"\tFarePerKm\x18\x02 \x01(\x01R\tFarePerKm\x12 \n" +
+	"\vFareTotalKm\x18\x03 \x01(\x01R\vFareTotalKm\x12$\n" +
+	"\rTaxPercentage\x18\x04 \x01(\x01R\rTaxPercentage\x12\x1c\n" +
+	"\tTaxAmount\x18\x05 \x01(\x01R\tTaxAmount\x12.\n" +
+	"\x06coupon\x18\x06 \x01(\v2\x11.tripProto.CouponH\x00R\x06coupon\x88\x01\x01\x124\n" +
+	"\bdiscount\x18\a \x01(\v2\x13.tripProto.DiscountH\x01R\bdiscount\x88\x01\x01\x127\n" +
+	"\x14WaitingTimeInMinutes\x18\b \x01(\x02H\x02R\x14WaitingTimeInMinutes\x88\x01\x01\x12!\n" +
+	"\tDelayFees\x18\t \x01(\x01H\x03R\tDelayFees\x88\x01\x01\x123\n" +
+	"\x12IdealTimeInMinutes\x18\n" +
+	" \x01(\x02H\x04R\x12IdealTimeInMinutes\x88\x01\x01\x12!\n" +
+	"\tIdealFees\x18\v \x01(\x01H\x05R\tIdealFees\x88\x01\x01\x12@\n" +
+	"\x1bAdminCommissionInPercentage\x18\f \x01(\x01R\x1bAdminCommissionInPercentage\x12(\n" +
+	"\x0fTotalTripAmount\x18\r \x01(\x01R\x0fTotalTripAmountB\t\n" +
+	"\a_couponB\v\n" +
+	"\t_discountB\x17\n" +
+	"\x15_WaitingTimeInMinutesB\f\n" +
+	"\n" +
+	"_DelayFeesB\x15\n" +
+	"\x13_IdealTimeInMinutesB\f\n" +
+	"\n" +
+	"_IdealFees\"S\n" +
+	"\tLocations\x12 \n" +
+	"\vcoordinates\x18\x01 \x03(\x01R\vcoordinates\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x10\n" +
+	"\x03add\x18\x03 \x01(\tR\x03add\"/\n" +
+	"\tPolyLines\x12\x10\n" +
+	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lng\x18\x02 \x01(\x01R\x03lng\"~\n" +
+	"\x14CancelBookingRequest\x12\x16\n" +
+	"\x06tripId\x18\x01 \x01(\tR\x06tripId\x12\x18\n" +
+	"\aadminId\x18\x02 \x01(\tR\aadminId\x12\"\n" +
+	"\fcancelReason\x18\x03 \x01(\tR\fcancelReason\x12\x10\n" +
+	"\x03tag\x18\x04 \x01(\tR\x03tag\"1\n" +
+	"\x15CancelBookingResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"p\n" +
+	" AssignDriverToTripByAdminRequest\x12\x18\n" +
+	"\aadminId\x18\x01 \x01(\tR\aadminId\x12\x16\n" +
+	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x12\x1a\n" +
+	"\bdriverId\x18\x03 \x01(\tR\bdriverId\"=\n" +
+	"!AssignDriverToTripByAdminResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\";\n" +
+	"!FindSuitableDriversForTripRequest\x12\x16\n" +
+	"\x06tripId\x18\x01 \x01(\tR\x06tripId\"~\n" +
+	"\"FindSuitableDriversForTripResponse\x12X\n" +
+	"\x16suitableDriverForTrips\x18\x01 \x03(\v2 .tripProto.SuitableDriverForTripR\x16suitableDriverForTrips\"\xb1\x02\n" +
+	"\x15SuitableDriverForTrip\x12\x1a\n" +
+	"\bdriverId\x18\x01 \x01(\tR\bdriverId\x12(\n" +
+	"\x0fdriverFirstName\x18\x02 \x01(\tR\x0fdriverFirstName\x12&\n" +
+	"\x0edriverLastName\x18\x03 \x01(\tR\x0edriverLastName\x12 \n" +
+	"\vnumberPlate\x18\x04 \x01(\tR\vnumberPlate\x12$\n" +
+	"\rpetPermission\x18\x05 \x01(\tR\rpetPermission\x12\x1e\n" +
+	"\n" +
+	"driverType\x18\x06 \x01(\tR\n" +
+	"driverType\x12B\n" +
+	"\x1callQueueAndOngoingTripsCount\x18\a \x01(\x05R\x1callQueueAndOngoingTripsCount\"2\n" +
+	"\x10TripStatsRequest\x12\x1e\n" +
+	"\n" +
+	"zoneFilter\x18\x01 \x01(\tR\n" +
+	"zoneFilter\"o\n" +
+	"\x11TripStatsResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12(\n" +
+	"\x04data\x18\x03 \x01(\v2\x14.tripProto.TripStatsR\x04data\"\xf5\x01\n" +
+	"\tTripStats\x12(\n" +
+	"\x0fpendingRequests\x18\x01 \x01(\x03R\x0fpendingRequests\x12$\n" +
+	"\racceptedTrips\x18\x02 \x01(\x03R\racceptedTrips\x12\"\n" +
+	"\fongoingTrips\x18\x03 \x01(\x03R\fongoingTrips\x12&\n" +
+	"\x0escheduledTrips\x18\x04 \x01(\x03R\x0escheduledTrips\x12&\n" +
+	"\x0ecompletedTrips\x18\x05 \x01(\x03R\x0ecompletedTrips\x12$\n" +
+	"\rcanceledTrips\x18\x06 \x01(\x03R\rcanceledTrips\"{\n" +
+	"\x19CancelledTripStatsRequest\x12\x1e\n" +
+	"\n" +
+	"zoneFilter\x18\x01 \x01(\tR\n" +
+	"zoneFilter\x12\x1e\n" +
+	"\n" +
+	"timeFilter\x18\x02 \x01(\tR\n" +
+	"timeFilter\x12\x1e\n" +
+	"\n" +
+	"customDate\x18\x03 \x01(\tR\n" +
+	"customDate\"\x81\x01\n" +
+	"\x1aCancelledTripStatsResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x121\n" +
+	"\x04data\x18\x03 \x01(\v2\x1d.tripProto.CancelledTripStatsR\x04data\"G\n" +
+	"\x12CancelledTripStats\x121\n" +
+	"\x04list\x18\x02 \x03(\v2\x1d.tripProto.CancelledTripGroupR\x04list\"|\n" +
+	"\x12CancelledTripGroup\x12\x1a\n" +
+	"\bcancelBy\x18\x01 \x01(\tR\bcancelBy\x12 \n" +
+	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel\x12(\n" +
+	"\x04tags\x18\x03 \x03(\v2\x14.tripProto.CancelTagR\x04tags\"A\n" +
+	"\tCancelTag\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel2\xb7\x05\n" +
+	"\vTripService\x12I\n" +
+	"\fGetTripStats\x12\x1b.tripProto.TripStatsRequest\x1a\x1c.tripProto.TripStatsResponse\x12V\n" +
+	"\x10FetchTripListing\x12\".tripProto.FetchTripListingRequest\x1a\x1e.tripProto.TripListingResponse\x12X\n" +
+	"\x0fFetchTripDetail\x12!.tripProto.FetchTripDetailRequest\x1a\".tripProto.FetchTripDetailResponse\x12R\n" +
+	"\rCancelBooking\x12\x1f.tripProto.CancelBookingRequest\x1a .tripProto.CancelBookingResponse\x12v\n" +
+	"\x19AssignDriverToTripByAdmin\x12+.tripProto.AssignDriverToTripByAdminRequest\x1a,.tripProto.AssignDriverToTripByAdminResponse\x12y\n" +
+	"\x1aFindSuitableDriversForTrip\x12,.tripProto.FindSuitableDriversForTripRequest\x1a-.tripProto.FindSuitableDriversForTripResponse\x12d\n" +
+	"\x15GetCancelledTripStats\x12$.tripProto.CancelledTripStatsRequest\x1a%.tripProto.CancelledTripStatsResponseB\x0eZ\f/proto/tripsb\x06proto3"
 
 var (
 	file_proto_trips_trip_proto_rawDescOnce sync.Once
@@ -106,18 +2635,86 @@ func file_proto_trips_trip_proto_rawDescGZIP() []byte {
 	return file_proto_trips_trip_proto_rawDescData
 }
 
-var file_proto_trips_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_trips_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_proto_trips_trip_proto_goTypes = []any{
-	(*GenericResponse)(nil), // 0: trackerGenericProto.GenericResponse
-	nil,                     // 1: trackerGenericProto.GenericResponse.DataEntry
+	(*FetchTripListingRequest)(nil),            // 0: tripProto.FetchTripListingRequest
+	(*TripListingResponse)(nil),                // 1: tripProto.TripListingResponse
+	(*FetchTripListingResponse)(nil),           // 2: tripProto.FetchTripListingResponse
+	(*TripListingRes)(nil),                     // 3: tripProto.TripListingRes
+	(*AdditionalFees)(nil),                     // 4: tripProto.AdditionalFees
+	(*Discount)(nil),                           // 5: tripProto.Discount
+	(*Coupon)(nil),                             // 6: tripProto.Coupon
+	(*CustomerDetails)(nil),                    // 7: tripProto.CustomerDetails
+	(*CancelledBy)(nil),                        // 8: tripProto.CancelledBy
+	(*DriverDetails)(nil),                      // 9: tripProto.DriverDetails
+	(*FetchTripDetailRequest)(nil),             // 10: tripProto.FetchTripDetailRequest
+	(*FetchTripDetailResponse)(nil),            // 11: tripProto.FetchTripDetailResponse
+	(*CustomerDetailsRes)(nil),                 // 12: tripProto.CustomerDetailsRes
+	(*MobileNumber)(nil),                       // 13: tripProto.MobileNumber
+	(*DriverDetailsRes)(nil),                   // 14: tripProto.DriverDetailsRes
+	(*TripDetails)(nil),                        // 15: tripProto.TripDetails
+	(*TripSummary)(nil),                        // 16: tripProto.TripSummary
+	(*Locations)(nil),                          // 17: tripProto.Locations
+	(*PolyLines)(nil),                          // 18: tripProto.PolyLines
+	(*CancelBookingRequest)(nil),               // 19: tripProto.CancelBookingRequest
+	(*CancelBookingResponse)(nil),              // 20: tripProto.CancelBookingResponse
+	(*AssignDriverToTripByAdminRequest)(nil),   // 21: tripProto.AssignDriverToTripByAdminRequest
+	(*AssignDriverToTripByAdminResponse)(nil),  // 22: tripProto.AssignDriverToTripByAdminResponse
+	(*FindSuitableDriversForTripRequest)(nil),  // 23: tripProto.FindSuitableDriversForTripRequest
+	(*FindSuitableDriversForTripResponse)(nil), // 24: tripProto.FindSuitableDriversForTripResponse
+	(*SuitableDriverForTrip)(nil),              // 25: tripProto.SuitableDriverForTrip
+	(*TripStatsRequest)(nil),                   // 26: tripProto.TripStatsRequest
+	(*TripStatsResponse)(nil),                  // 27: tripProto.TripStatsResponse
+	(*TripStats)(nil),                          // 28: tripProto.TripStats
+	(*CancelledTripStatsRequest)(nil),          // 29: tripProto.CancelledTripStatsRequest
+	(*CancelledTripStatsResponse)(nil),         // 30: tripProto.CancelledTripStatsResponse
+	(*CancelledTripStats)(nil),                 // 31: tripProto.CancelledTripStats
+	(*CancelledTripGroup)(nil),                 // 32: tripProto.CancelledTripGroup
+	(*CancelTag)(nil),                          // 33: tripProto.CancelTag
 }
 var file_proto_trips_trip_proto_depIdxs = []int32{
-	1, // 0: trackerGenericProto.GenericResponse.data:type_name -> trackerGenericProto.GenericResponse.DataEntry
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2,  // 0: tripProto.TripListingResponse.data:type_name -> tripProto.FetchTripListingResponse
+	3,  // 1: tripProto.FetchTripListingResponse.tripsRes:type_name -> tripProto.TripListingRes
+	7,  // 2: tripProto.TripListingRes.customer:type_name -> tripProto.CustomerDetails
+	9,  // 3: tripProto.TripListingRes.driver:type_name -> tripProto.DriverDetails
+	6,  // 4: tripProto.TripListingRes.coupon:type_name -> tripProto.Coupon
+	4,  // 5: tripProto.TripListingRes.additionalFees:type_name -> tripProto.AdditionalFees
+	8,  // 6: tripProto.TripListingRes.cancelledBy:type_name -> tripProto.CancelledBy
+	5,  // 7: tripProto.TripListingRes.discount:type_name -> tripProto.Discount
+	12, // 8: tripProto.FetchTripDetailResponse.customerDetails:type_name -> tripProto.CustomerDetailsRes
+	14, // 9: tripProto.FetchTripDetailResponse.driverDetails:type_name -> tripProto.DriverDetailsRes
+	15, // 10: tripProto.FetchTripDetailResponse.tripDetails:type_name -> tripProto.TripDetails
+	13, // 11: tripProto.CustomerDetailsRes.mobileNumber:type_name -> tripProto.MobileNumber
+	13, // 12: tripProto.DriverDetailsRes.mobileNumber:type_name -> tripProto.MobileNumber
+	17, // 13: tripProto.TripDetails.location:type_name -> tripProto.Locations
+	18, // 14: tripProto.TripDetails.coordinate:type_name -> tripProto.PolyLines
+	16, // 15: tripProto.TripDetails.tripSummary:type_name -> tripProto.TripSummary
+	6,  // 16: tripProto.TripSummary.coupon:type_name -> tripProto.Coupon
+	5,  // 17: tripProto.TripSummary.discount:type_name -> tripProto.Discount
+	25, // 18: tripProto.FindSuitableDriversForTripResponse.suitableDriverForTrips:type_name -> tripProto.SuitableDriverForTrip
+	28, // 19: tripProto.TripStatsResponse.data:type_name -> tripProto.TripStats
+	31, // 20: tripProto.CancelledTripStatsResponse.data:type_name -> tripProto.CancelledTripStats
+	32, // 21: tripProto.CancelledTripStats.list:type_name -> tripProto.CancelledTripGroup
+	33, // 22: tripProto.CancelledTripGroup.tags:type_name -> tripProto.CancelTag
+	26, // 23: tripProto.TripService.GetTripStats:input_type -> tripProto.TripStatsRequest
+	0,  // 24: tripProto.TripService.FetchTripListing:input_type -> tripProto.FetchTripListingRequest
+	10, // 25: tripProto.TripService.FetchTripDetail:input_type -> tripProto.FetchTripDetailRequest
+	19, // 26: tripProto.TripService.CancelBooking:input_type -> tripProto.CancelBookingRequest
+	21, // 27: tripProto.TripService.AssignDriverToTripByAdmin:input_type -> tripProto.AssignDriverToTripByAdminRequest
+	23, // 28: tripProto.TripService.FindSuitableDriversForTrip:input_type -> tripProto.FindSuitableDriversForTripRequest
+	29, // 29: tripProto.TripService.GetCancelledTripStats:input_type -> tripProto.CancelledTripStatsRequest
+	27, // 30: tripProto.TripService.GetTripStats:output_type -> tripProto.TripStatsResponse
+	1,  // 31: tripProto.TripService.FetchTripListing:output_type -> tripProto.TripListingResponse
+	11, // 32: tripProto.TripService.FetchTripDetail:output_type -> tripProto.FetchTripDetailResponse
+	20, // 33: tripProto.TripService.CancelBooking:output_type -> tripProto.CancelBookingResponse
+	22, // 34: tripProto.TripService.AssignDriverToTripByAdmin:output_type -> tripProto.AssignDriverToTripByAdminResponse
+	24, // 35: tripProto.TripService.FindSuitableDriversForTrip:output_type -> tripProto.FindSuitableDriversForTripResponse
+	30, // 36: tripProto.TripService.GetCancelledTripStats:output_type -> tripProto.CancelledTripStatsResponse
+	30, // [30:37] is the sub-list for method output_type
+	23, // [23:30] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_proto_trips_trip_proto_init() }
@@ -125,15 +2722,19 @@ func file_proto_trips_trip_proto_init() {
 	if File_proto_trips_trip_proto != nil {
 		return
 	}
+	file_proto_trips_trip_proto_msgTypes[3].OneofWrappers = []any{}
+	file_proto_trips_trip_proto_msgTypes[4].OneofWrappers = []any{}
+	file_proto_trips_trip_proto_msgTypes[15].OneofWrappers = []any{}
+	file_proto_trips_trip_proto_msgTypes[16].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_trips_trip_proto_rawDesc), len(file_proto_trips_trip_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   34,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_proto_trips_trip_proto_goTypes,
 		DependencyIndexes: file_proto_trips_trip_proto_depIdxs,
