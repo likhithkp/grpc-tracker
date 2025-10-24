@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package tripProto;
+package trackerTripProto;
 
 option go_package = "proto/trips";
 

@@ -2385,7 +2385,7 @@ var File_proto_trips_trip_proto protoreflect.FileDescriptor
 
 const file_proto_trips_trip_proto_rawDesc = "" +
 	"\n" +
-	"\x16proto/trips/trip.proto\x12\ttripProto\"\xd7\x01\n" +
+	"\x16proto/trips/trip.proto\x12\x10trackerTripProto\"\xd7\x01\n" +
 	"\x17FetchTripListingRequest\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x18\n" +
 	"\aperPage\x18\x02 \x01(\x05R\aperPage\x12\x16\n" +
@@ -2399,35 +2399,35 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"timeFilter\x12\x1e\n" +
 	"\n" +
 	"customDate\x18\a \x01(\tR\n" +
-	"customDate\"N\n" +
-	"\x13TripListingResponse\x127\n" +
-	"\x04data\x18\x01 \x01(\v2#.tripProto.FetchTripListingResponseR\x04data\"\xc3\x01\n" +
+	"customDate\"U\n" +
+	"\x13TripListingResponse\x12>\n" +
+	"\x04data\x18\x01 \x01(\v2*.trackerTripProto.FetchTripListingResponseR\x04data\"\xca\x01\n" +
 	"\x18FetchTripListingResponse\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x05R\x05total\x12\x18\n" +
 	"\aperPage\x18\x02 \x01(\x05R\aperPage\x12 \n" +
 	"\vcurrentPage\x18\x03 \x01(\x05R\vcurrentPage\x12\x1e\n" +
 	"\n" +
 	"totalPages\x18\x04 \x01(\x05R\n" +
-	"totalPages\x125\n" +
-	"\btripsRes\x18\x06 \x03(\v2\x19.tripProto.TripListingResR\btripsRes\"\xac\x05\n" +
+	"totalPages\x12<\n" +
+	"\btripsRes\x18\x06 \x03(\v2 .trackerTripProto.TripListingResR\btripsRes\"\xd6\x05\n" +
 	"\x0eTripListingRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x12\x1a\n" +
-	"\bdateTime\x18\x03 \x01(\tR\bdateTime\x126\n" +
-	"\bcustomer\x18\x04 \x01(\v2\x1a.tripProto.CustomerDetailsR\bcustomer\x125\n" +
-	"\x06driver\x18\x05 \x01(\v2\x18.tripProto.DriverDetailsH\x00R\x06driver\x88\x01\x01\x12\x1a\n" +
-	"\btripCost\x18\x06 \x01(\x01R\btripCost\x12)\n" +
-	"\x06coupon\x18\a \x01(\v2\x11.tripProto.CouponR\x06coupon\x12A\n" +
-	"\x0eadditionalFees\x18\b \x01(\v2\x19.tripProto.AdditionalFeesR\x0eadditionalFees\x12=\n" +
-	"\vcancelledBy\x18\t \x01(\v2\x16.tripProto.CancelledByH\x01R\vcancelledBy\x88\x01\x01\x12$\n" +
+	"\bdateTime\x18\x03 \x01(\tR\bdateTime\x12=\n" +
+	"\bcustomer\x18\x04 \x01(\v2!.trackerTripProto.CustomerDetailsR\bcustomer\x12<\n" +
+	"\x06driver\x18\x05 \x01(\v2\x1f.trackerTripProto.DriverDetailsH\x00R\x06driver\x88\x01\x01\x12\x1a\n" +
+	"\btripCost\x18\x06 \x01(\x01R\btripCost\x120\n" +
+	"\x06coupon\x18\a \x01(\v2\x18.trackerTripProto.CouponR\x06coupon\x12H\n" +
+	"\x0eadditionalFees\x18\b \x01(\v2 .trackerTripProto.AdditionalFeesR\x0eadditionalFees\x12D\n" +
+	"\vcancelledBy\x18\t \x01(\v2\x1d.trackerTripProto.CancelledByH\x01R\vcancelledBy\x88\x01\x01\x12$\n" +
 	"\rtotalTripCost\x18\n" +
 	" \x01(\x01R\rtotalTripCost\x12&\n" +
 	"\x0eadminComission\x18\v \x01(\x01R\x0eadminComission\x12,\n" +
 	"\x11tripPaymentStatus\x18\f \x01(\tR\x11tripPaymentStatus\x12\x1e\n" +
 	"\n" +
 	"tripStatus\x18\r \x01(\tR\n" +
-	"tripStatus\x12/\n" +
-	"\bdiscount\x18\x0e \x01(\v2\x13.tripProto.DiscountR\bdiscount\x126\n" +
+	"tripStatus\x126\n" +
+	"\bdiscount\x18\x0e \x01(\v2\x1a.trackerTripProto.DiscountR\bdiscount\x126\n" +
 	"\x16customerLocationsCount\x18\x0f \x01(\x03R\x16customerLocationsCountB\t\n" +
 	"\a_driverB\x0e\n" +
 	"\f_cancelledBy\"\x9a\x03\n" +
@@ -2472,38 +2472,38 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"\x06tripId\x18\x01 \x01(\tR\x06tripId\x12\x1e\n" +
 	"\n" +
 	"tripStatus\x18\x02 \x01(\tR\n" +
-	"tripStatus\"\x91\x02\n" +
+	"tripStatus\"\xa6\x02\n" +
 	"\x17FetchTripDetailResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12G\n" +
-	"\x0fcustomerDetails\x18\x03 \x01(\v2\x1d.tripProto.CustomerDetailsResR\x0fcustomerDetails\x12A\n" +
-	"\rdriverDetails\x18\x04 \x01(\v2\x1b.tripProto.DriverDetailsResR\rdriverDetails\x128\n" +
-	"\vtripDetails\x18\x05 \x01(\v2\x16.tripProto.TripDetailsR\vtripDetails\"\xc7\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12N\n" +
+	"\x0fcustomerDetails\x18\x03 \x01(\v2$.trackerTripProto.CustomerDetailsResR\x0fcustomerDetails\x12H\n" +
+	"\rdriverDetails\x18\x04 \x01(\v2\".trackerTripProto.DriverDetailsResR\rdriverDetails\x12?\n" +
+	"\vtripDetails\x18\x05 \x01(\v2\x1d.trackerTripProto.TripDetailsR\vtripDetails\"\xce\x01\n" +
 	"\x12CustomerDetailsRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1c\n" +
 	"\tfirstName\x18\x04 \x01(\tR\tfirstName\x12\x1a\n" +
-	"\blastName\x18\x05 \x01(\tR\blastName\x12;\n" +
-	"\fmobileNumber\x18\a \x01(\v2\x17.tripProto.MobileNumberR\fmobileNumber\"^\n" +
+	"\blastName\x18\x05 \x01(\tR\blastName\x12B\n" +
+	"\fmobileNumber\x18\a \x01(\v2\x1e.trackerTripProto.MobileNumberR\fmobileNumber\"^\n" +
 	"\fMobileNumber\x12\x1a\n" +
 	"\bdialCode\x18\x01 \x01(\tR\bdialCode\x12\x16\n" +
 	"\x06number\x18\x02 \x01(\tR\x06number\x12\x1a\n" +
-	"\bflagCode\x18\x03 \x01(\tR\bflagCode\"\xe9\x01\n" +
+	"\bflagCode\x18\x03 \x01(\tR\bflagCode\"\xf0\x01\n" +
 	"\x10DriverDetailsRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x1c\n" +
 	"\tfirstName\x18\x04 \x01(\tR\tfirstName\x12\x1a\n" +
-	"\blastName\x18\x05 \x01(\tR\blastName\x12;\n" +
-	"\fmobileNumber\x18\a \x01(\v2\x17.tripProto.MobileNumberR\fmobileNumber\x12\"\n" +
-	"\fvehicleImage\x18\b \x01(\tR\fvehicleImage\"\xc5\x04\n" +
+	"\blastName\x18\x05 \x01(\tR\blastName\x12B\n" +
+	"\fmobileNumber\x18\a \x01(\v2\x1e.trackerTripProto.MobileNumberR\fmobileNumber\x12\"\n" +
+	"\fvehicleImage\x18\b \x01(\tR\fvehicleImage\"\xda\x04\n" +
 	"\vTripDetails\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x120\n" +
-	"\blocation\x18\x03 \x03(\v2\x14.tripProto.LocationsR\blocation\x124\n" +
+	"\x06tripId\x18\x02 \x01(\tR\x06tripId\x127\n" +
+	"\blocation\x18\x03 \x03(\v2\x1b.trackerTripProto.LocationsR\blocation\x12;\n" +
 	"\n" +
-	"coordinate\x18\x04 \x03(\v2\x14.tripProto.PolyLinesR\n" +
+	"coordinate\x18\x04 \x03(\v2\x1b.trackerTripProto.PolyLinesR\n" +
 	"coordinate\x12\"\n" +
 	"\fdistanceInKm\x18\x05 \x01(\x02R\fdistanceInKm\x12,\n" +
 	"\x11distanceInMinutes\x18\x06 \x01(\x02R\x11distanceInMinutes\x12(\n" +
@@ -2513,20 +2513,20 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"tripStatus\x12,\n" +
 	"\x11tripPaymentStatus\x18\n" +
 	" \x01(\tR\x11tripPaymentStatus\x12(\n" +
-	"\x0ftripPaymentType\x18\v \x01(\tR\x0ftripPaymentType\x128\n" +
-	"\vtripSummary\x18\f \x01(\v2\x16.tripProto.TripSummaryR\vtripSummary\x12-\n" +
+	"\x0ftripPaymentType\x18\v \x01(\tR\x0ftripPaymentType\x12?\n" +
+	"\vtripSummary\x18\f \x01(\v2\x1d.trackerTripProto.TripSummaryR\vtripSummary\x12-\n" +
 	"\x0fcancelledReason\x18\r \x01(\tH\x00R\x0fcancelledReason\x88\x01\x01\x12%\n" +
 	"\vcancelledBy\x18\x0e \x01(\tH\x01R\vcancelledBy\x88\x01\x01B\x12\n" +
 	"\x10_cancelledReasonB\x0e\n" +
-	"\f_cancelledBy\"\x97\x05\n" +
+	"\f_cancelledBy\"\xa5\x05\n" +
 	"\vTripSummary\x12\x1a\n" +
 	"\bBaseFare\x18\x01 \x01(\x01R\bBaseFare\x12\x1c\n" +
 	"\tFarePerKm\x18\x02 \x01(\x01R\tFarePerKm\x12 \n" +
 	"\vFareTotalKm\x18\x03 \x01(\x01R\vFareTotalKm\x12$\n" +
 	"\rTaxPercentage\x18\x04 \x01(\x01R\rTaxPercentage\x12\x1c\n" +
-	"\tTaxAmount\x18\x05 \x01(\x01R\tTaxAmount\x12.\n" +
-	"\x06coupon\x18\x06 \x01(\v2\x11.tripProto.CouponH\x00R\x06coupon\x88\x01\x01\x124\n" +
-	"\bdiscount\x18\a \x01(\v2\x13.tripProto.DiscountH\x01R\bdiscount\x88\x01\x01\x127\n" +
+	"\tTaxAmount\x18\x05 \x01(\x01R\tTaxAmount\x125\n" +
+	"\x06coupon\x18\x06 \x01(\v2\x18.trackerTripProto.CouponH\x00R\x06coupon\x88\x01\x01\x12;\n" +
+	"\bdiscount\x18\a \x01(\v2\x1a.trackerTripProto.DiscountH\x01R\bdiscount\x88\x01\x01\x127\n" +
 	"\x14WaitingTimeInMinutes\x18\b \x01(\x02H\x02R\x14WaitingTimeInMinutes\x88\x01\x01\x12!\n" +
 	"\tDelayFees\x18\t \x01(\x01H\x03R\tDelayFees\x88\x01\x01\x123\n" +
 	"\x12IdealTimeInMinutes\x18\n" +
@@ -2563,9 +2563,9 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"!AssignDriverToTripByAdminResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\";\n" +
 	"!FindSuitableDriversForTripRequest\x12\x16\n" +
-	"\x06tripId\x18\x01 \x01(\tR\x06tripId\"~\n" +
-	"\"FindSuitableDriversForTripResponse\x12X\n" +
-	"\x16suitableDriverForTrips\x18\x01 \x03(\v2 .tripProto.SuitableDriverForTripR\x16suitableDriverForTrips\"\xb1\x02\n" +
+	"\x06tripId\x18\x01 \x01(\tR\x06tripId\"\x85\x01\n" +
+	"\"FindSuitableDriversForTripResponse\x12_\n" +
+	"\x16suitableDriverForTrips\x18\x01 \x03(\v2'.trackerTripProto.SuitableDriverForTripR\x16suitableDriverForTrips\"\xb1\x02\n" +
 	"\x15SuitableDriverForTrip\x12\x1a\n" +
 	"\bdriverId\x18\x01 \x01(\tR\bdriverId\x12(\n" +
 	"\x0fdriverFirstName\x18\x02 \x01(\tR\x0fdriverFirstName\x12&\n" +
@@ -2579,11 +2579,11 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"\x10TripStatsRequest\x12\x1e\n" +
 	"\n" +
 	"zoneFilter\x18\x01 \x01(\tR\n" +
-	"zoneFilter\"o\n" +
+	"zoneFilter\"v\n" +
 	"\x11TripStatsResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12(\n" +
-	"\x04data\x18\x03 \x01(\v2\x14.tripProto.TripStatsR\x04data\"\xf5\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12/\n" +
+	"\x04data\x18\x03 \x01(\v2\x1b.trackerTripProto.TripStatsR\x04data\"\xf5\x01\n" +
 	"\tTripStats\x12(\n" +
 	"\x0fpendingRequests\x18\x01 \x01(\x03R\x0fpendingRequests\x12$\n" +
 	"\racceptedTrips\x18\x02 \x01(\x03R\racceptedTrips\x12\"\n" +
@@ -2600,28 +2600,28 @@ const file_proto_trips_trip_proto_rawDesc = "" +
 	"timeFilter\x12\x1e\n" +
 	"\n" +
 	"customDate\x18\x03 \x01(\tR\n" +
-	"customDate\"\x81\x01\n" +
+	"customDate\"\x88\x01\n" +
 	"\x1aCancelledTripStatsResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x121\n" +
-	"\x04data\x18\x03 \x01(\v2\x1d.tripProto.CancelledTripStatsR\x04data\"G\n" +
-	"\x12CancelledTripStats\x121\n" +
-	"\x04list\x18\x02 \x03(\v2\x1d.tripProto.CancelledTripGroupR\x04list\"|\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
+	"\x04data\x18\x03 \x01(\v2$.trackerTripProto.CancelledTripStatsR\x04data\"N\n" +
+	"\x12CancelledTripStats\x128\n" +
+	"\x04list\x18\x02 \x03(\v2$.trackerTripProto.CancelledTripGroupR\x04list\"\x83\x01\n" +
 	"\x12CancelledTripGroup\x12\x1a\n" +
 	"\bcancelBy\x18\x01 \x01(\tR\bcancelBy\x12 \n" +
-	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel\x12(\n" +
-	"\x04tags\x18\x03 \x03(\v2\x14.tripProto.CancelTagR\x04tags\"A\n" +
+	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel\x12/\n" +
+	"\x04tags\x18\x03 \x03(\v2\x1b.trackerTripProto.CancelTagR\x04tags\"A\n" +
 	"\tCancelTag\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel2\xb7\x05\n" +
-	"\vTripService\x12I\n" +
-	"\fGetTripStats\x12\x1b.tripProto.TripStatsRequest\x1a\x1c.tripProto.TripStatsResponse\x12V\n" +
-	"\x10FetchTripListing\x12\".tripProto.FetchTripListingRequest\x1a\x1e.tripProto.TripListingResponse\x12X\n" +
-	"\x0fFetchTripDetail\x12!.tripProto.FetchTripDetailRequest\x1a\".tripProto.FetchTripDetailResponse\x12R\n" +
-	"\rCancelBooking\x12\x1f.tripProto.CancelBookingRequest\x1a .tripProto.CancelBookingResponse\x12v\n" +
-	"\x19AssignDriverToTripByAdmin\x12+.tripProto.AssignDriverToTripByAdminRequest\x1a,.tripProto.AssignDriverToTripByAdminResponse\x12y\n" +
-	"\x1aFindSuitableDriversForTrip\x12,.tripProto.FindSuitableDriversForTripRequest\x1a-.tripProto.FindSuitableDriversForTripResponse\x12d\n" +
-	"\x15GetCancelledTripStats\x12$.tripProto.CancelledTripStatsRequest\x1a%.tripProto.CancelledTripStatsResponseB\rZ\vproto/tripsb\x06proto3"
+	"\vtotalCancel\x18\x02 \x01(\x05R\vtotalCancel2\x9b\x06\n" +
+	"\vTripService\x12W\n" +
+	"\fGetTripStats\x12\".trackerTripProto.TripStatsRequest\x1a#.trackerTripProto.TripStatsResponse\x12d\n" +
+	"\x10FetchTripListing\x12).trackerTripProto.FetchTripListingRequest\x1a%.trackerTripProto.TripListingResponse\x12f\n" +
+	"\x0fFetchTripDetail\x12(.trackerTripProto.FetchTripDetailRequest\x1a).trackerTripProto.FetchTripDetailResponse\x12`\n" +
+	"\rCancelBooking\x12&.trackerTripProto.CancelBookingRequest\x1a'.trackerTripProto.CancelBookingResponse\x12\x84\x01\n" +
+	"\x19AssignDriverToTripByAdmin\x122.trackerTripProto.AssignDriverToTripByAdminRequest\x1a3.trackerTripProto.AssignDriverToTripByAdminResponse\x12\x87\x01\n" +
+	"\x1aFindSuitableDriversForTrip\x123.trackerTripProto.FindSuitableDriversForTripRequest\x1a4.trackerTripProto.FindSuitableDriversForTripResponse\x12r\n" +
+	"\x15GetCancelledTripStats\x12+.trackerTripProto.CancelledTripStatsRequest\x1a,.trackerTripProto.CancelledTripStatsResponseB\rZ\vproto/tripsb\x06proto3"
 
 var (
 	file_proto_trips_trip_proto_rawDescOnce sync.Once
@@ -2637,79 +2637,79 @@ func file_proto_trips_trip_proto_rawDescGZIP() []byte {
 
 var file_proto_trips_trip_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_proto_trips_trip_proto_goTypes = []any{
-	(*FetchTripListingRequest)(nil),            // 0: tripProto.FetchTripListingRequest
-	(*TripListingResponse)(nil),                // 1: tripProto.TripListingResponse
-	(*FetchTripListingResponse)(nil),           // 2: tripProto.FetchTripListingResponse
-	(*TripListingRes)(nil),                     // 3: tripProto.TripListingRes
-	(*AdditionalFees)(nil),                     // 4: tripProto.AdditionalFees
-	(*Discount)(nil),                           // 5: tripProto.Discount
-	(*Coupon)(nil),                             // 6: tripProto.Coupon
-	(*CustomerDetails)(nil),                    // 7: tripProto.CustomerDetails
-	(*CancelledBy)(nil),                        // 8: tripProto.CancelledBy
-	(*DriverDetails)(nil),                      // 9: tripProto.DriverDetails
-	(*FetchTripDetailRequest)(nil),             // 10: tripProto.FetchTripDetailRequest
-	(*FetchTripDetailResponse)(nil),            // 11: tripProto.FetchTripDetailResponse
-	(*CustomerDetailsRes)(nil),                 // 12: tripProto.CustomerDetailsRes
-	(*MobileNumber)(nil),                       // 13: tripProto.MobileNumber
-	(*DriverDetailsRes)(nil),                   // 14: tripProto.DriverDetailsRes
-	(*TripDetails)(nil),                        // 15: tripProto.TripDetails
-	(*TripSummary)(nil),                        // 16: tripProto.TripSummary
-	(*Locations)(nil),                          // 17: tripProto.Locations
-	(*PolyLines)(nil),                          // 18: tripProto.PolyLines
-	(*CancelBookingRequest)(nil),               // 19: tripProto.CancelBookingRequest
-	(*CancelBookingResponse)(nil),              // 20: tripProto.CancelBookingResponse
-	(*AssignDriverToTripByAdminRequest)(nil),   // 21: tripProto.AssignDriverToTripByAdminRequest
-	(*AssignDriverToTripByAdminResponse)(nil),  // 22: tripProto.AssignDriverToTripByAdminResponse
-	(*FindSuitableDriversForTripRequest)(nil),  // 23: tripProto.FindSuitableDriversForTripRequest
-	(*FindSuitableDriversForTripResponse)(nil), // 24: tripProto.FindSuitableDriversForTripResponse
-	(*SuitableDriverForTrip)(nil),              // 25: tripProto.SuitableDriverForTrip
-	(*TripStatsRequest)(nil),                   // 26: tripProto.TripStatsRequest
-	(*TripStatsResponse)(nil),                  // 27: tripProto.TripStatsResponse
-	(*TripStats)(nil),                          // 28: tripProto.TripStats
-	(*CancelledTripStatsRequest)(nil),          // 29: tripProto.CancelledTripStatsRequest
-	(*CancelledTripStatsResponse)(nil),         // 30: tripProto.CancelledTripStatsResponse
-	(*CancelledTripStats)(nil),                 // 31: tripProto.CancelledTripStats
-	(*CancelledTripGroup)(nil),                 // 32: tripProto.CancelledTripGroup
-	(*CancelTag)(nil),                          // 33: tripProto.CancelTag
+	(*FetchTripListingRequest)(nil),            // 0: trackerTripProto.FetchTripListingRequest
+	(*TripListingResponse)(nil),                // 1: trackerTripProto.TripListingResponse
+	(*FetchTripListingResponse)(nil),           // 2: trackerTripProto.FetchTripListingResponse
+	(*TripListingRes)(nil),                     // 3: trackerTripProto.TripListingRes
+	(*AdditionalFees)(nil),                     // 4: trackerTripProto.AdditionalFees
+	(*Discount)(nil),                           // 5: trackerTripProto.Discount
+	(*Coupon)(nil),                             // 6: trackerTripProto.Coupon
+	(*CustomerDetails)(nil),                    // 7: trackerTripProto.CustomerDetails
+	(*CancelledBy)(nil),                        // 8: trackerTripProto.CancelledBy
+	(*DriverDetails)(nil),                      // 9: trackerTripProto.DriverDetails
+	(*FetchTripDetailRequest)(nil),             // 10: trackerTripProto.FetchTripDetailRequest
+	(*FetchTripDetailResponse)(nil),            // 11: trackerTripProto.FetchTripDetailResponse
+	(*CustomerDetailsRes)(nil),                 // 12: trackerTripProto.CustomerDetailsRes
+	(*MobileNumber)(nil),                       // 13: trackerTripProto.MobileNumber
+	(*DriverDetailsRes)(nil),                   // 14: trackerTripProto.DriverDetailsRes
+	(*TripDetails)(nil),                        // 15: trackerTripProto.TripDetails
+	(*TripSummary)(nil),                        // 16: trackerTripProto.TripSummary
+	(*Locations)(nil),                          // 17: trackerTripProto.Locations
+	(*PolyLines)(nil),                          // 18: trackerTripProto.PolyLines
+	(*CancelBookingRequest)(nil),               // 19: trackerTripProto.CancelBookingRequest
+	(*CancelBookingResponse)(nil),              // 20: trackerTripProto.CancelBookingResponse
+	(*AssignDriverToTripByAdminRequest)(nil),   // 21: trackerTripProto.AssignDriverToTripByAdminRequest
+	(*AssignDriverToTripByAdminResponse)(nil),  // 22: trackerTripProto.AssignDriverToTripByAdminResponse
+	(*FindSuitableDriversForTripRequest)(nil),  // 23: trackerTripProto.FindSuitableDriversForTripRequest
+	(*FindSuitableDriversForTripResponse)(nil), // 24: trackerTripProto.FindSuitableDriversForTripResponse
+	(*SuitableDriverForTrip)(nil),              // 25: trackerTripProto.SuitableDriverForTrip
+	(*TripStatsRequest)(nil),                   // 26: trackerTripProto.TripStatsRequest
+	(*TripStatsResponse)(nil),                  // 27: trackerTripProto.TripStatsResponse
+	(*TripStats)(nil),                          // 28: trackerTripProto.TripStats
+	(*CancelledTripStatsRequest)(nil),          // 29: trackerTripProto.CancelledTripStatsRequest
+	(*CancelledTripStatsResponse)(nil),         // 30: trackerTripProto.CancelledTripStatsResponse
+	(*CancelledTripStats)(nil),                 // 31: trackerTripProto.CancelledTripStats
+	(*CancelledTripGroup)(nil),                 // 32: trackerTripProto.CancelledTripGroup
+	(*CancelTag)(nil),                          // 33: trackerTripProto.CancelTag
 }
 var file_proto_trips_trip_proto_depIdxs = []int32{
-	2,  // 0: tripProto.TripListingResponse.data:type_name -> tripProto.FetchTripListingResponse
-	3,  // 1: tripProto.FetchTripListingResponse.tripsRes:type_name -> tripProto.TripListingRes
-	7,  // 2: tripProto.TripListingRes.customer:type_name -> tripProto.CustomerDetails
-	9,  // 3: tripProto.TripListingRes.driver:type_name -> tripProto.DriverDetails
-	6,  // 4: tripProto.TripListingRes.coupon:type_name -> tripProto.Coupon
-	4,  // 5: tripProto.TripListingRes.additionalFees:type_name -> tripProto.AdditionalFees
-	8,  // 6: tripProto.TripListingRes.cancelledBy:type_name -> tripProto.CancelledBy
-	5,  // 7: tripProto.TripListingRes.discount:type_name -> tripProto.Discount
-	12, // 8: tripProto.FetchTripDetailResponse.customerDetails:type_name -> tripProto.CustomerDetailsRes
-	14, // 9: tripProto.FetchTripDetailResponse.driverDetails:type_name -> tripProto.DriverDetailsRes
-	15, // 10: tripProto.FetchTripDetailResponse.tripDetails:type_name -> tripProto.TripDetails
-	13, // 11: tripProto.CustomerDetailsRes.mobileNumber:type_name -> tripProto.MobileNumber
-	13, // 12: tripProto.DriverDetailsRes.mobileNumber:type_name -> tripProto.MobileNumber
-	17, // 13: tripProto.TripDetails.location:type_name -> tripProto.Locations
-	18, // 14: tripProto.TripDetails.coordinate:type_name -> tripProto.PolyLines
-	16, // 15: tripProto.TripDetails.tripSummary:type_name -> tripProto.TripSummary
-	6,  // 16: tripProto.TripSummary.coupon:type_name -> tripProto.Coupon
-	5,  // 17: tripProto.TripSummary.discount:type_name -> tripProto.Discount
-	25, // 18: tripProto.FindSuitableDriversForTripResponse.suitableDriverForTrips:type_name -> tripProto.SuitableDriverForTrip
-	28, // 19: tripProto.TripStatsResponse.data:type_name -> tripProto.TripStats
-	31, // 20: tripProto.CancelledTripStatsResponse.data:type_name -> tripProto.CancelledTripStats
-	32, // 21: tripProto.CancelledTripStats.list:type_name -> tripProto.CancelledTripGroup
-	33, // 22: tripProto.CancelledTripGroup.tags:type_name -> tripProto.CancelTag
-	26, // 23: tripProto.TripService.GetTripStats:input_type -> tripProto.TripStatsRequest
-	0,  // 24: tripProto.TripService.FetchTripListing:input_type -> tripProto.FetchTripListingRequest
-	10, // 25: tripProto.TripService.FetchTripDetail:input_type -> tripProto.FetchTripDetailRequest
-	19, // 26: tripProto.TripService.CancelBooking:input_type -> tripProto.CancelBookingRequest
-	21, // 27: tripProto.TripService.AssignDriverToTripByAdmin:input_type -> tripProto.AssignDriverToTripByAdminRequest
-	23, // 28: tripProto.TripService.FindSuitableDriversForTrip:input_type -> tripProto.FindSuitableDriversForTripRequest
-	29, // 29: tripProto.TripService.GetCancelledTripStats:input_type -> tripProto.CancelledTripStatsRequest
-	27, // 30: tripProto.TripService.GetTripStats:output_type -> tripProto.TripStatsResponse
-	1,  // 31: tripProto.TripService.FetchTripListing:output_type -> tripProto.TripListingResponse
-	11, // 32: tripProto.TripService.FetchTripDetail:output_type -> tripProto.FetchTripDetailResponse
-	20, // 33: tripProto.TripService.CancelBooking:output_type -> tripProto.CancelBookingResponse
-	22, // 34: tripProto.TripService.AssignDriverToTripByAdmin:output_type -> tripProto.AssignDriverToTripByAdminResponse
-	24, // 35: tripProto.TripService.FindSuitableDriversForTrip:output_type -> tripProto.FindSuitableDriversForTripResponse
-	30, // 36: tripProto.TripService.GetCancelledTripStats:output_type -> tripProto.CancelledTripStatsResponse
+	2,  // 0: trackerTripProto.TripListingResponse.data:type_name -> trackerTripProto.FetchTripListingResponse
+	3,  // 1: trackerTripProto.FetchTripListingResponse.tripsRes:type_name -> trackerTripProto.TripListingRes
+	7,  // 2: trackerTripProto.TripListingRes.customer:type_name -> trackerTripProto.CustomerDetails
+	9,  // 3: trackerTripProto.TripListingRes.driver:type_name -> trackerTripProto.DriverDetails
+	6,  // 4: trackerTripProto.TripListingRes.coupon:type_name -> trackerTripProto.Coupon
+	4,  // 5: trackerTripProto.TripListingRes.additionalFees:type_name -> trackerTripProto.AdditionalFees
+	8,  // 6: trackerTripProto.TripListingRes.cancelledBy:type_name -> trackerTripProto.CancelledBy
+	5,  // 7: trackerTripProto.TripListingRes.discount:type_name -> trackerTripProto.Discount
+	12, // 8: trackerTripProto.FetchTripDetailResponse.customerDetails:type_name -> trackerTripProto.CustomerDetailsRes
+	14, // 9: trackerTripProto.FetchTripDetailResponse.driverDetails:type_name -> trackerTripProto.DriverDetailsRes
+	15, // 10: trackerTripProto.FetchTripDetailResponse.tripDetails:type_name -> trackerTripProto.TripDetails
+	13, // 11: trackerTripProto.CustomerDetailsRes.mobileNumber:type_name -> trackerTripProto.MobileNumber
+	13, // 12: trackerTripProto.DriverDetailsRes.mobileNumber:type_name -> trackerTripProto.MobileNumber
+	17, // 13: trackerTripProto.TripDetails.location:type_name -> trackerTripProto.Locations
+	18, // 14: trackerTripProto.TripDetails.coordinate:type_name -> trackerTripProto.PolyLines
+	16, // 15: trackerTripProto.TripDetails.tripSummary:type_name -> trackerTripProto.TripSummary
+	6,  // 16: trackerTripProto.TripSummary.coupon:type_name -> trackerTripProto.Coupon
+	5,  // 17: trackerTripProto.TripSummary.discount:type_name -> trackerTripProto.Discount
+	25, // 18: trackerTripProto.FindSuitableDriversForTripResponse.suitableDriverForTrips:type_name -> trackerTripProto.SuitableDriverForTrip
+	28, // 19: trackerTripProto.TripStatsResponse.data:type_name -> trackerTripProto.TripStats
+	31, // 20: trackerTripProto.CancelledTripStatsResponse.data:type_name -> trackerTripProto.CancelledTripStats
+	32, // 21: trackerTripProto.CancelledTripStats.list:type_name -> trackerTripProto.CancelledTripGroup
+	33, // 22: trackerTripProto.CancelledTripGroup.tags:type_name -> trackerTripProto.CancelTag
+	26, // 23: trackerTripProto.TripService.GetTripStats:input_type -> trackerTripProto.TripStatsRequest
+	0,  // 24: trackerTripProto.TripService.FetchTripListing:input_type -> trackerTripProto.FetchTripListingRequest
+	10, // 25: trackerTripProto.TripService.FetchTripDetail:input_type -> trackerTripProto.FetchTripDetailRequest
+	19, // 26: trackerTripProto.TripService.CancelBooking:input_type -> trackerTripProto.CancelBookingRequest
+	21, // 27: trackerTripProto.TripService.AssignDriverToTripByAdmin:input_type -> trackerTripProto.AssignDriverToTripByAdminRequest
+	23, // 28: trackerTripProto.TripService.FindSuitableDriversForTrip:input_type -> trackerTripProto.FindSuitableDriversForTripRequest
+	29, // 29: trackerTripProto.TripService.GetCancelledTripStats:input_type -> trackerTripProto.CancelledTripStatsRequest
+	27, // 30: trackerTripProto.TripService.GetTripStats:output_type -> trackerTripProto.TripStatsResponse
+	1,  // 31: trackerTripProto.TripService.FetchTripListing:output_type -> trackerTripProto.TripListingResponse
+	11, // 32: trackerTripProto.TripService.FetchTripDetail:output_type -> trackerTripProto.FetchTripDetailResponse
+	20, // 33: trackerTripProto.TripService.CancelBooking:output_type -> trackerTripProto.CancelBookingResponse
+	22, // 34: trackerTripProto.TripService.AssignDriverToTripByAdmin:output_type -> trackerTripProto.AssignDriverToTripByAdminResponse
+	24, // 35: trackerTripProto.TripService.FindSuitableDriversForTrip:output_type -> trackerTripProto.FindSuitableDriversForTripResponse
+	30, // 36: trackerTripProto.TripService.GetCancelledTripStats:output_type -> trackerTripProto.CancelledTripStatsResponse
 	30, // [30:37] is the sub-list for method output_type
 	23, // [23:30] is the sub-list for method input_type
 	23, // [23:23] is the sub-list for extension type_name
