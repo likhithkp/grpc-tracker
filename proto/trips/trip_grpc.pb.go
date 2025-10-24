@@ -19,13 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TripService_GetTripStats_FullMethodName               = "/tripProto.TripService/GetTripStats"
-	TripService_FetchTripListing_FullMethodName           = "/tripProto.TripService/FetchTripListing"
-	TripService_FetchTripDetail_FullMethodName            = "/tripProto.TripService/FetchTripDetail"
-	TripService_CancelBooking_FullMethodName              = "/tripProto.TripService/CancelBooking"
-	TripService_AssignDriverToTripByAdmin_FullMethodName  = "/tripProto.TripService/AssignDriverToTripByAdmin"
-	TripService_FindSuitableDriversForTrip_FullMethodName = "/tripProto.TripService/FindSuitableDriversForTrip"
-	TripService_GetCancelledTripStats_FullMethodName      = "/tripProto.TripService/GetCancelledTripStats"
+	TripService_GetTripStats_FullMethodName               = "/trackerTripProto.TripService/GetTripStats"
+	TripService_FetchTripListing_FullMethodName           = "/trackerTripProto.TripService/FetchTripListing"
+	TripService_FetchTripDetail_FullMethodName            = "/trackerTripProto.TripService/FetchTripDetail"
+	TripService_CancelBooking_FullMethodName              = "/trackerTripProto.TripService/CancelBooking"
+	TripService_AssignDriverToTripByAdmin_FullMethodName  = "/trackerTripProto.TripService/AssignDriverToTripByAdmin"
+	TripService_FindSuitableDriversForTrip_FullMethodName = "/trackerTripProto.TripService/FindSuitableDriversForTrip"
+	TripService_GetCancelledTripStats_FullMethodName      = "/trackerTripProto.TripService/GetCancelledTripStats"
 )
 
 // TripServiceClient is the client API for TripService service.
@@ -312,7 +312,7 @@ func _TripService_GetCancelledTripStats_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TripService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "tripProto.TripService",
+	ServiceName: "trackerTripProto.TripService",
 	HandlerType: (*TripServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
