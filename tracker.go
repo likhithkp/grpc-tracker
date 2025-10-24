@@ -32,7 +32,7 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 		log.Println("Full method:", info.FullMethod)
 
 		// Modify response
-		if info.FullMethod == "/trackerTripProto.TripService/GetTripStats" {
+		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
 			if r, ok := resp.(*trips.TripStatsResponse); ok {
 				r.Data.AcceptedTrips = 5000
 				r.Data.CanceledTrips = 23000
@@ -40,7 +40,6 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 				r.Data.ScheduledTrips = 8000
 				r.Data.CompletedTrips = 16000
 				r.Data.PendingRequests = 10000
-				resp = r
 			}
 		}
 
