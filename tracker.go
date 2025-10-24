@@ -31,7 +31,7 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		// Modify response
-		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
+		if info.FullMethod == "/trackerTripProto.TripService/GetTripStats" {
 			if r, ok := resp.(*trips.TripStatsResponse); ok {
 				r.Data.AcceptedTrips = 5000
 				r.Data.CanceledTrips = 23000
