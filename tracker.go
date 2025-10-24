@@ -2,7 +2,6 @@ package grpctracker
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/likhithkp/grpc-tracker/proto/trips"
@@ -34,18 +33,20 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 		// Modify response
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
-			if r, ok := resp.(*trips.TripStatsResponse); ok {
-
-				fmt.Println("Ok", ok)
-				fmt.Println("r", r)
-
-				r.Data.AcceptedTrips = 5000
-				r.Data.CanceledTrips = 23000
-				r.Data.OngoingTrips = 3000
-				r.Data.ScheduledTrips = 8000
-				r.Data.CompletedTrips = 16000
-				r.Data.PendingRequests = 10000
+			// Build generic response
+			genericResp := &trips.GenericResponse{
+				Status:  true,
+				Message: "Trip stats fetched dynamically",
+				Data: map[string]int64{
+					"acceptedTrips":   5000,
+					"canceledTrips":   23000,
+					"ongoingTrips":    3000,
+					"scheduledTrips":  8000,
+					"completedTrips":  16000,
+					"pendingRequests": 10000,
+				},
 			}
+			resp = genericResp
 		}
 
 		log.Printf("[GRPC Tracker] Response - Method: %s, Payload: %+v, Error: %v\n", info.FullMethod, resp, err)
