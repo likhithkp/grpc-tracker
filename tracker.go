@@ -29,6 +29,7 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 		*/
 
 		resp, err := handler(ctx, req)
+		log.Println("Full method:", info.FullMethod)
 
 		// Modify response
 		if info.FullMethod == "/trackerTripProto.TripService/GetTripStats" {
