@@ -2,9 +2,10 @@ package grpctracker
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"reflect"
 
+	"github.com/likhithkp/grpc-tracker/proto/trips"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 )
@@ -33,28 +34,17 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 		// Modify response
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
-			v := reflect.ValueOf(resp)
-			if v.Kind() == reflect.Ptr {
-				v = v.Elem()
-				dataField := v.FieldByName("Data")
-				if dataField.IsValid() && dataField.CanSet() {
-					data := dataField.Interface()
-					dv := reflect.ValueOf(data)
-					if dv.Kind() == reflect.Struct {
-						setInt64 := func(name string, val int64) {
-							f := dv.FieldByName(name)
-							if f.IsValid() && f.CanSet() && f.Kind() == reflect.Int64 {
-								f.SetInt(val)
-							}
-						}
-						setInt64("AcceptedTrips", 5000)
-						setInt64("CanceledTrips", 23000)
-						setInt64("OngoingTrips", 3000)
-						setInt64("ScheduledTrips", 8000)
-						setInt64("CompletedTrips", 16000)
-						setInt64("PendingRequests", 10000)
-					}
-				}
+			if r, ok := resp.(*trips.TripStatsResponse); ok {
+
+				fmt.Println("Ok", ok)
+				fmt.Println("r", r)
+
+				r.Data.AcceptedTrips = 5000
+				r.Data.CanceledTrips = 23000
+				r.Data.OngoingTrips = 3000
+				r.Data.ScheduledTrips = 8000
+				r.Data.CompletedTrips = 16000
+				r.Data.PendingRequests = 10000
 			}
 		}
 
