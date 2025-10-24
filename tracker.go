@@ -16,7 +16,6 @@ func modifyTripStats(resp interface{}) {
 		return
 	}
 
-	// Get the "data" field
 	v := msg.ProtoReflect()
 	dataField := v.Descriptor().Fields().ByName("data")
 	if dataField == nil {
@@ -50,8 +49,8 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 		log.Printf("[GRPC Tracker] Request - Method: %s, Payload: %+v\n", info.FullMethod, req)
 		resp, err := handler(ctx, req)
-		log.Println("Full method:", info.FullMethod)
 
+		//modify response
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
 			modifyTripStats(resp)
 		}
@@ -61,23 +60,10 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-func StreamInterceptor() grpc.StreamServerInterceptor {
-	return func(
-		srv interface{},
-		ss grpc.ServerStream,
-		info *grpc.StreamServerInfo,
-		handler grpc.StreamHandler,
-	) error {
-		log.Printf("[GRPC Tracker] Stream - Method: %s\n", info.FullMethod)
-		return handler(srv, ss)
-	}
-}
-
 func FxModule() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			func() grpc.UnaryServerInterceptor { return UnaryInterceptor() },
-			func() grpc.StreamServerInterceptor { return StreamInterceptor() },
 		),
 	)
 }
