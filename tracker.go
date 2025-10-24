@@ -4,10 +4,41 @@ import (
 	"context"
 	"log"
 
-	"github.com/likhithkp/grpc-tracker/proto/trips"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
+
+func modifyTripStats(resp interface{}) {
+	msg, ok := resp.(proto.Message)
+	if !ok {
+		return
+	}
+
+	// Get the "data" field
+	v := msg.ProtoReflect()
+	dataField := v.Descriptor().Fields().ByName("data")
+	if dataField == nil {
+		return
+	}
+
+	data := v.Mutable(dataField).Message()
+
+	setField := func(name string, val int64) {
+		f := data.Descriptor().Fields().ByName(protoreflect.Name(name))
+		if f != nil {
+			data.Set(f, protoreflect.ValueOfInt64(val))
+		}
+	}
+
+	setField("acceptedTrips", 5000)
+	setField("canceledTrips", 23000)
+	setField("ongoingTrips", 3000)
+	setField("scheduledTrips", 8000)
+	setField("completedTrips", 16000)
+	setField("pendingRequests", 10000)
+}
 
 func UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(
@@ -18,29 +49,11 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 	) (interface{}, error) {
 
 		log.Printf("[GRPC Tracker] Request - Method: %s, Payload: %+v\n", info.FullMethod, req)
-
-		// Call actual handler
 		resp, err := handler(ctx, req)
-		if err != nil {
-			return resp, err
-		}
-
 		log.Println("Full method:", info.FullMethod)
 
-		// Dynamically override response but keep proto type
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
-			if r, ok := resp.(*trips.TripStatsResponse); ok {
-				// Override fields safely
-				r.Data.AcceptedTrips = 5000
-				r.Data.CanceledTrips = 23000
-				r.Data.OngoingTrips = 3000
-				r.Data.ScheduledTrips = 8000
-				r.Data.CompletedTrips = 16000
-				r.Data.PendingRequests = 10000
-
-				// Optionally override message
-				r.Message = "Trip stats fetched dynamically"
-			}
+			modifyTripStats(resp)
 		}
 
 		log.Printf("[GRPC Tracker] Response - Method: %s, Payload: %+v, Error: %v\n", info.FullMethod, resp, err)
@@ -63,12 +76,8 @@ func StreamInterceptor() grpc.StreamServerInterceptor {
 func FxModule() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			func() grpc.UnaryServerInterceptor {
-				return UnaryInterceptor()
-			},
-			func() grpc.StreamServerInterceptor {
-				return StreamInterceptor()
-			},
+			func() grpc.UnaryServerInterceptor { return UnaryInterceptor() },
+			func() grpc.StreamServerInterceptor { return StreamInterceptor() },
 		),
 	)
 }
