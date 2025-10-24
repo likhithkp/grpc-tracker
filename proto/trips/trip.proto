@@ -1,0 +1,260 @@
+syntax = "proto3";
+
+package tripProto;
+
+option go_package = "proto/trips";
+
+message FetchTripListingRequest {
+  int32 page = 1;
+  int32 perPage = 2;
+  string status = 3;
+  string search = 4;
+  string zoneFilter = 5;
+  string timeFilter = 6;
+  string customDate = 7;
+}
+
+message TripListingResponse {
+  FetchTripListingResponse data = 1;
+}
+
+message FetchTripListingResponse  {
+  int32 total = 1;
+  int32 perPage = 2;
+  int32 currentPage = 3;
+  int32 totalPages = 4;
+  repeated TripListingRes tripsRes = 6;
+}
+
+message TripListingRes {
+  string id = 1;
+  string tripId = 2;
+  string dateTime = 3;
+  CustomerDetails customer = 4;
+  optional DriverDetails driver = 5;
+  double tripCost = 6;
+  Coupon coupon = 7;
+  AdditionalFees additionalFees = 8;
+  optional CancelledBy cancelledBy = 9;
+  double totalTripCost = 10;
+  double adminComission = 11;
+  string tripPaymentStatus = 12;
+  string tripStatus = 13;
+  Discount discount = 14;
+  int64 customerLocationsCount = 15;
+}
+
+message AdditionalFees {
+  double TaxPercentage = 1;
+  double TaxAmount = 2;
+  optional double CancellationFees = 3;
+  optional float WaitingTimeInMinutes = 4;
+  optional double DelayFees = 5;
+  optional float IdealTimeInMinutes = 6;
+  optional double IdealFees = 7;
+}
+
+message Discount {
+  string id = 1;
+  double amount = 2;
+}
+
+message Coupon {
+  string couponCode = 1;
+  double percentage = 2;
+  double amount = 3;
+}
+
+message CustomerDetails {
+  string id = 1;
+  string firstName = 2;
+  string lastName = 3;
+}
+
+message CancelledBy {
+  string id = 1;
+  string type = 2;
+}
+
+
+message DriverDetails {
+  string id = 1;
+  string firstName = 2;
+  string lastName = 3;
+}
+
+message FetchTripDetailRequest {
+  string tripId = 1;
+  string tripStatus = 2;
+}
+
+message FetchTripDetailResponse {
+  bool status = 1;
+  string message = 2;
+  CustomerDetailsRes customerDetails = 3;
+  DriverDetailsRes driverDetails = 4;
+  TripDetails tripDetails = 5;
+}
+
+message CustomerDetailsRes{
+  string id = 1;
+  string image = 2;
+  string email = 3;
+  string firstName = 4;
+  string lastName = 5;
+  MobileNumber mobileNumber = 7;
+}
+
+message MobileNumber {
+  string dialCode = 1;
+  string number = 2;
+  string flagCode = 3;
+}
+
+message DriverDetailsRes {
+  string id = 1;
+  string image = 2;
+  string email = 3;
+  string firstName = 4;
+  string lastName = 5;
+  MobileNumber mobileNumber = 7;
+  string vehicleImage = 8;
+}
+
+message TripDetails {
+  string id = 1;
+  string tripId = 2;
+  repeated Locations location = 3;
+  repeated PolyLines coordinate = 4;
+  float distanceInKm = 5;
+  float distanceInMinutes = 6;
+  string bookingDateTime = 7;
+  string tripStatus = 8;
+  string tripPaymentStatus = 10;
+  string tripPaymentType = 11;
+  TripSummary tripSummary = 12;
+  optional string cancelledReason = 13;
+  optional string cancelledBy = 14;
+}
+
+message TripSummary {
+  double BaseFare = 1;
+  double FarePerKm = 2;
+  double FareTotalKm = 3;
+  double TaxPercentage = 4;
+  double TaxAmount = 5;
+  optional Coupon coupon = 6;
+  optional Discount discount = 7;
+  optional float WaitingTimeInMinutes = 8;
+  optional double DelayFees = 9;
+  optional float IdealTimeInMinutes = 10;
+  optional double IdealFees = 11;
+  double AdminCommissionInPercentage = 12;
+  double TotalTripAmount = 13;
+}
+
+message Locations {
+  repeated double coordinates = 1;
+  string type = 2;
+  string add = 3;
+}
+
+message PolyLines {
+  double lat = 1;
+  double lng = 2;
+}
+
+message CancelBookingRequest {
+  string tripId = 1;
+  string adminId = 2;
+  string cancelReason = 3;
+  string tag = 4;
+}
+
+message CancelBookingResponse {
+  string message = 1;
+}
+
+message AssignDriverToTripByAdminRequest {
+  string adminId = 1;
+  string tripId = 2;
+  string driverId = 3;
+}
+
+message AssignDriverToTripByAdminResponse {
+  string message = 1;
+}
+
+message FindSuitableDriversForTripRequest {
+  string tripId = 1;
+}
+
+message FindSuitableDriversForTripResponse {
+  repeated SuitableDriverForTrip suitableDriverForTrips = 1;
+}
+
+message SuitableDriverForTrip {
+  string driverId = 1;
+  string driverFirstName = 2;
+  string driverLastName = 3;
+  string numberPlate = 4;
+  string petPermission = 5;
+  string driverType = 6;
+  int32 allQueueAndOngoingTripsCount = 7;
+}
+
+message TripStatsRequest {
+  string zoneFilter = 1;
+}
+
+message TripStatsResponse {
+  bool status = 1;
+  string message = 2;
+  TripStats data = 3;
+}
+
+message TripStats {
+  int64 pendingRequests = 1;
+  int64 acceptedTrips = 2;
+  int64 ongoingTrips = 3;
+  int64 scheduledTrips = 4;
+  int64 completedTrips = 5;
+  int64 canceledTrips = 6;
+}
+
+message CancelledTripStatsRequest {
+  string zoneFilter = 1;
+  string timeFilter = 2;
+  string customDate = 3;
+}
+
+message CancelledTripStatsResponse {
+  bool status = 1;
+  string message = 2;
+  CancelledTripStats data = 3;
+}
+
+message CancelledTripStats {
+  repeated CancelledTripGroup list = 2;
+}
+
+message CancelledTripGroup {
+  string cancelBy = 1;
+  int32 totalCancel = 2;
+  repeated CancelTag tags = 3;
+}
+
+message CancelTag {
+  string name = 1;
+  int32 totalCancel = 2;
+}
+
+service TripService {
+  rpc GetTripStats(TripStatsRequest) returns (TripStatsResponse);
+  rpc FetchTripListing(FetchTripListingRequest) returns (TripListingResponse);
+  rpc FetchTripDetail(FetchTripDetailRequest) returns (FetchTripDetailResponse);
+  rpc CancelBooking(CancelBookingRequest) returns (CancelBookingResponse);
+  rpc AssignDriverToTripByAdmin(AssignDriverToTripByAdminRequest) returns (AssignDriverToTripByAdminResponse);
+  rpc FindSuitableDriversForTrip(FindSuitableDriversForTripRequest) returns (FindSuitableDriversForTripResponse);
+  rpc GetCancelledTripStats(CancelledTripStatsRequest) returns (CancelledTripStatsResponse);
+}
