@@ -5,49 +5,34 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 var logger = log.New(os.Stdout, "[AUTO-GRPC-TRACKER] ", log.LstdFlags)
 
 func init() {
-	logger.Println("🚀 Auto gRPC Tracker initialized — passive network monitor active")
-	go monitorGRPCPort(":4430")
+	logger.Println("🚀 Auto gRPC Tracker initialized — passive attach mode")
+	go passiveMonitor(":4430")
 }
 
-// monitorGRPCPort listens on the same gRPC port and logs incoming request attempts.
-func monitorGRPCPort(port string) {
-	ln, err := net.Listen("tcp", port)
-	if err != nil {
-		logger.Printf("⚠️ Could not listen on %s — probably already in use by your main app, switching to passive mode", port)
-		go attachToExistingPort(port)
-		return
-	}
-	defer ln.Close()
-	logger.Printf("👂 Listening on %s for gRPC traffic...", port)
+// passiveMonitor tries to attach to an already running gRPC port safely.
+func passiveMonitor(port string) {
 	for {
-		conn, err := ln.Accept()
+		conn, err := net.Dial("tcp", "127.0.0.1"+port)
 		if err != nil {
+			time.Sleep(1 * time.Second)
 			continue
 		}
-		go handleConn(conn)
-	}
-}
 
-func attachToExistingPort(port string) {
-	addr := "127.0.0.1" + port
-	for {
-		conn, err := net.Dial("tcp", addr)
-		if err == nil {
-			logger.Printf("🧩 Attached to running gRPC port %s", port)
-			go handleConn(conn)
-			return
-		}
+		logger.Printf("🧩 Attached to running gRPC server on %s", port)
+		handleConn(conn)
+		conn.Close()
+		time.Sleep(2 * time.Second)
 	}
 }
 
 func handleConn(conn net.Conn) {
 	defer conn.Close()
-	remote := conn.RemoteAddr().String()
 	reader := bufio.NewReader(conn)
 
 	for {
@@ -55,10 +40,11 @@ func handleConn(conn net.Conn) {
 		if err != nil {
 			return
 		}
-		// gRPC requests always start with a 5-byte header
+
+		// gRPC frames begin with a 5-byte header
 		if len(data) > 0 {
-			logger.Printf("📡 gRPC call detected from %s", remote)
-			break
+			logger.Printf("📡 gRPC activity detected on %s", conn.RemoteAddr())
+			return
 		}
 	}
 }
