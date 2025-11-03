@@ -145,95 +145,87 @@
 package grpctracker
 
 import (
+	"bufio"
 	"bytes"
+	"io"
 	"log"
 	"net"
+	"os"
+	"regexp"
 	"strings"
-	"time"
-
-	"golang.org/x/sys/unix"
 )
 
-// CONFIG
-const grpcPort = 4430
-
 func init() {
-	go func() {
-		time.Sleep(2 * time.Second)
-		startEBPFGrpcSniffer()
-	}()
+	go startProxy()
 }
 
-func startEBPFGrpcSniffer() {
-	log.Printf("[grpc-tracker] 🧠 attaching eBPF sniffer to :%d ...", grpcPort)
+// startProxy listens on a proxy port and forwards to backend, printing gRPC service calls.
+func startProxy() {
+	listenAddr := os.Getenv("GRPC_TRACKER_LISTEN_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":4440"
+	}
+	backendAddr := os.Getenv("GRPC_TRACKER_BACKEND_ADDR")
+	if backendAddr == "" {
+		backendAddr = "127.0.0.1:4430"
+	}
 
-	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_RAW, unix.IPPROTO_TCP)
+	lis, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ raw socket error: %v", err)
+		log.Printf("[grpc-tracker] ❌ failed to listen on %s: %v", listenAddr, err)
 		return
 	}
-	defer unix.Close(fd)
+	log.Printf("[grpc-tracker] 👂 listening on %s → forwarding to %s", listenAddr, backendAddr)
 
-	if err := unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEADDR, 1); err != nil {
-		log.Printf("[grpc-tracker] setsockopt failed: %v", err)
-	}
-
-	localAddr := &unix.SockaddrInet4{Port: grpcPort}
-	copy(localAddr.Addr[:], net.ParseIP("127.0.0.1").To4())
-
-	if err := unix.Bind(fd, localAddr); err != nil {
-		log.Printf("[grpc-tracker] ⚠️ cannot bind (expected if port already in use): %v", err)
-	}
-
-	buf := make([]byte, 65535)
 	for {
-		n, _, err := unix.Recvfrom(fd, buf, 0)
+		clientConn, err := lis.Accept()
 		if err != nil {
-			if errorsIsTimeout(err) {
-				continue
-			}
-			time.Sleep(500 * time.Millisecond)
+			log.Printf("[grpc-tracker] accept error: %v", err)
 			continue
 		}
-
-		parseGrpcFrame(buf[:n])
+		go handleConnection(clientConn, backendAddr)
 	}
 }
 
-func errorsIsTimeout(err error) bool {
-	return strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "resource temporarily unavailable")
-}
+func handleConnection(clientConn net.Conn, backendAddr string) {
+	defer clientConn.Close()
 
-func parseGrpcFrame(packet []byte) {
-	// Skip IP + TCP headers roughly (~40 bytes)
-	if len(packet) < 40 {
+	serverConn, err := net.Dial("tcp", backendAddr)
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ cannot connect to backend %s: %v", backendAddr, err)
 		return
 	}
-	payload := packet[40:]
+	defer serverConn.Close()
 
-	if bytes.Contains(payload, []byte(":path")) {
-		idx := bytes.Index(payload, []byte(":path"))
-		if idx >= 0 {
-			pathStart := idx + len(":path")
-			snip := payload[pathStart:]
-			// extract /service/method style
-			if p := extractGrpcPath(snip); p != "" {
-				log.Printf("[grpc-tracker] 🚀 %s", p)
-			}
-		}
-	}
+	// log new proxy link
+	log.Printf("[grpc-tracker] 🔗 proxy link %s → %s", clientConn.RemoteAddr(), backendAddr)
+
+	go sniffGrpcCalls(clientConn)
+
+	// bidirectional copy
+	go io.Copy(serverConn, clientConn)
+	io.Copy(clientConn, serverConn)
 }
 
-func extractGrpcPath(data []byte) string {
-	s := string(data)
-	if i := strings.Index(s, "/"); i >= 0 {
-		s = s[i:]
-		if j := strings.IndexAny(s, "\r\n "); j >= 0 {
-			s = s[:j]
+// sniffGrpcCalls inspects incoming client messages for gRPC method names.
+func sniffGrpcCalls(conn net.Conn) {
+	reader := bufio.NewReader(conn)
+	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
+
+	for {
+		buf := make([]byte, 4096)
+		n, err := reader.Read(buf)
+		if n > 0 {
+			data := buf[:n]
+			if m := methodRegex.Find(data); m != nil {
+				method := string(bytes.TrimSpace(m))
+				if strings.Contains(method, "/") {
+					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
+				}
+			}
 		}
-		if strings.Count(s, "/") >= 2 {
-			return strings.TrimSpace(s)
+		if err != nil {
+			return
 		}
 	}
-	return ""
 }
