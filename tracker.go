@@ -10,14 +10,10 @@ import (
 )
 
 //NOTE: Add below in server.go inside NewGRPCServer()
-// grpcServer := grpc.NewServer(
 // 	grpc.ChainUnaryInterceptor(
 // 		interceptor.Unary(logger),
 // 		tracker.UnaryInterceptor,
-// 	),
-// 	grpc.MaxRecvMsgSize(1024*1024*100),
-// 	grpc.MaxSendMsgSize(1024*1024*100),
-// )
+// 	)
 
 //NOTE:Import
 //  go get github.com/likhithkp/grpc-tracker@v0.0.54
