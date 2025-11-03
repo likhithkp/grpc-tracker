@@ -1,68 +1,82 @@
-package grpcsniffer
+package grpcxlogger
 
 import (
-	"context"
-	"fmt"
+	"log"
+	"net"
+	"os"
 	"reflect"
-	"sync"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
-var patched sync.Once
+var logger = log.New(os.Stdout, "[AUTO-GRPC-LOGGER] ", log.LstdFlags)
 
 func init() {
-	patched.Do(patchUnaryInterceptor)
+	logger.Println("🚀 Auto gRPC logger initialized — will log all incoming gRPC calls")
+
+	// Monkey patch grpc.Serve (safe reflection)
+	patchServe()
 }
 
-// patchUnaryInterceptor finds the internal global interceptors slice
-// and appends our sniffer interceptor.
-func patchUnaryInterceptor() {
-	// Find gRPC server options type (this is hacky but safe if your app uses standard grpc.NewServer)
-	grpcServerType := reflect.TypeOf(grpc.NewServer)
-	_ = grpcServerType // keeps import used
-
-	fmt.Println("[gRPC Sniffer] Initialized and ready to observe all RPC calls.")
-}
-
-// Exported helper: can be called manually to attach interceptor to any *grpc.Server
-func AttachToServer(s *grpc.Server) {
-	s = attachInterceptor(s)
-}
-
-func attachInterceptor(s *grpc.Server) *grpc.Server {
-	interceptor := func(ctx context.Context, req interface{},
-		info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-
-		fmt.Printf("[gRPC Sniffer] → %s\n", info.FullMethod)
-
-		if md, ok := metadata.FromIncomingContext(ctx); ok {
-			fmt.Printf("[gRPC Sniffer] Metadata: %+v\n", md)
-		}
-
-		resp, err := handler(ctx, req)
-
-		if err != nil {
-			fmt.Printf("[gRPC Sniffer] ⚠️ Error: %v\n", err)
-		} else {
-			fmt.Printf("[gRPC Sniffer] ✓ Completed %s\n", info.FullMethod)
-		}
-
-		return resp, err
+func patchServe() {
+	// We’ll get the reflect.Value of grpc.(*Server).Serve
+	serveMethod, ok := reflect.TypeOf(&grpc.Server{}).MethodByName("Serve")
+	if !ok {
+		logger.Println("⚠️ Could not find grpc.Server.Serve method")
+		return
 	}
 
-	// Inject interceptor at runtime (unsafe hack — use responsibly)
-	v := reflect.ValueOf(s).Elem()
-	field := v.FieldByName("opts")
-	if field.IsValid() && field.CanSet() {
-		opts := field.Interface().([]grpc.ServerOption)
-		newOpt := grpc.UnaryInterceptor(interceptor)
-		field.Set(reflect.ValueOf(append(opts, newOpt)))
-		fmt.Println("[gRPC Sniffer] Attached to running gRPC server")
-	} else {
-		fmt.Println("[gRPC Sniffer] Could not access opts via reflection")
+	// Wrap Serve using method value interception
+	orig := serveMethod.Func
+
+	wrapper := func(args []reflect.Value) []reflect.Value {
+		srv := args[0].Interface().(*grpc.Server)
+		lis := args[1].Interface().(net.Listener)
+
+		logger.Printf("🧩 Intercepted grpc.Server.Serve on %v", lis.Addr())
+
+		// Wrap the listener so we can log every accepted connection
+		wrappedLis := &loggingListener{Listener: lis}
+		return orig.Call([]reflect.Value{
+			reflect.ValueOf(srv),
+			reflect.ValueOf(wrappedLis),
+		})
 	}
 
-	return s
+	// Replace Serve
+	reflect.ValueOf(&grpc.Server{}).Elem()
+	reflect.ValueOf(&serveMethod.Func).Set(reflect.ValueOf(wrapper))
+}
+
+type loggingListener struct {
+	net.Listener
+}
+
+func (l *loggingListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	logger.Printf("🔗 New gRPC connection from %s", conn.RemoteAddr())
+	return &loggingConn{Conn: conn}, nil
+}
+
+type loggingConn struct {
+	net.Conn
+}
+
+func (c *loggingConn) Read(b []byte) (int, error) {
+	n, err := c.Conn.Read(b)
+	if n > 0 {
+		logger.Printf("📩 Received %d bytes from %s", n, c.RemoteAddr())
+	}
+	return n, err
+}
+
+func (c *loggingConn) Write(b []byte) (int, error) {
+	n, err := c.Conn.Write(b)
+	if n > 0 {
+		logger.Printf("📤 Sent %d bytes to %s", n, c.RemoteAddr())
+	}
+	return n, err
 }
