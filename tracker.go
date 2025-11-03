@@ -145,67 +145,75 @@
 package grpctracker
 
 import (
-	"context"
+	"bufio"
+	"bytes"
 	"log"
-	"reflect"
-	"sync"
+	"net"
+	"regexp"
+	"strings"
 	"time"
-
-	"google.golang.org/grpc"
 )
 
-var once sync.Once
-
 func init() {
-	go func() {
-		// Give your Fx/gRPC server time to initialize
-		time.Sleep(2 * time.Second)
-		tryHookGrpcServer()
-	}()
+	go attachToLiveGrpc(":4430") // 👈 change this if your app uses a different gRPC port
 }
 
-func tryHookGrpcServer() {
-	once.Do(func() {
-		servers := findGrpcServers()
-		if len(servers) == 0 {
-			log.Println("[grpc-tracker] ⚠️ no grpc.Server found yet, retrying...")
+func attachToLiveGrpc(port string) {
+	for {
+		conn, err := net.Dial("tcp", port)
+		if err != nil {
+			log.Printf("[grpc-tracker] ⚠️ waiting for gRPC port %s...", port)
 			time.Sleep(2 * time.Second)
-			tryHookGrpcServer()
-			return
+			continue
 		}
+		conn.Close()
+		break
+	}
+	log.Printf("[grpc-tracker] 🧠 attached to live port %s", port)
 
-		for _, srv := range servers {
-			addInterceptor(srv)
-		}
-	})
+	go sniffGrpcPort(port)
 }
 
-// NOTE: Replace this if you have access to your actual gRPC server pointer.
-// This placeholder demonstrates hooking logic.
-func findGrpcServers() []*grpc.Server {
-	log.Println("[grpc-tracker] 🧠 attached to live gRPC server(s)")
-	return []*grpc.Server{}
-}
-
-func addInterceptor(srv *grpc.Server) {
-	v := reflect.ValueOf(srv).Elem()
-	opts := v.FieldByName("opts")
-	if !opts.IsValid() {
-		log.Println("[grpc-tracker] ❌ could not access grpc.Server opts")
+func sniffGrpcPort(port string) {
+	listener, err := net.Listen("tcp", ":0") // ephemeral proxy listener
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ cannot start listener: %v", err)
 		return
 	}
+	defer listener.Close()
 
-	// Create and inject our interceptor
-	newInt := grpc.UnaryInterceptor(func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		log.Printf("[grpc-tracker] 🚀 called: %s", info.FullMethod)
-		return handler(ctx, req)
-	})
+	for {
+		client, err := net.Dial("tcp", "127.0.0.1"+port)
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		log.Printf("[grpc-tracker] 🔗 sniffing connection %s", port)
+		go mirrorConnection(client)
+		time.Sleep(6 * time.Second)
+	}
+}
 
-	opts.FieldByName("unaryInt").Set(reflect.ValueOf(newInt))
-	log.Println("[grpc-tracker] ✅ interceptor injected into grpc.Server")
+func mirrorConnection(c net.Conn) {
+	defer c.Close()
+	reader := bufio.NewReader(c)
+	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
+
+	for {
+		buf := make([]byte, 4096)
+		c.SetReadDeadline(time.Now().Add(3 * time.Second))
+		n, err := reader.Read(buf)
+		if n > 0 {
+			chunk := buf[:n]
+			if m := methodRegex.Find(chunk); m != nil {
+				method := string(bytes.TrimSpace(m))
+				if strings.Contains(method, "/") {
+					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
+				}
+			}
+		}
+		if err != nil {
+			return
+		}
+	}
 }
