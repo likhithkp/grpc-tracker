@@ -145,100 +145,95 @@
 package grpctracker
 
 import (
-	"io"
+	"bytes"
 	"log"
 	"net"
-	"os"
+	"strings"
+	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"golang.org/x/sys/unix"
 )
 
+// CONFIG
+const grpcPort = 4430
+
 func init() {
-	go startProxy()
+	go func() {
+		time.Sleep(2 * time.Second)
+		startEBPFGrpcSniffer()
+	}()
 }
 
-func startProxy() {
-	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
-	if listenAddr == "" {
-		listenAddr = ":4440"
-	}
-	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-	if backendAddr == "" {
-		backendAddr = "127.0.0.1:4430"
-	}
+func startEBPFGrpcSniffer() {
+	log.Printf("[grpc-tracker] 🧠 attaching eBPF sniffer to :%d ...", grpcPort)
 
-	lis, err := net.Listen("tcp", listenAddr)
+	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_RAW, unix.IPPROTO_TCP)
 	if err != nil {
-		log.Fatalf("[grpc-tracker] ❌ Failed to listen on %s: %v", listenAddr, err)
+		log.Printf("[grpc-tracker] ❌ raw socket error: %v", err)
+		return
+	}
+	defer unix.Close(fd)
+
+	if err := unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_REUSEADDR, 1); err != nil {
+		log.Printf("[grpc-tracker] setsockopt failed: %v", err)
 	}
 
-	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s → backend %s", listenAddr, backendAddr)
+	localAddr := &unix.SockaddrInet4{Port: grpcPort}
+	copy(localAddr.Addr[:], net.ParseIP("127.0.0.1").To4())
 
-	s := grpc.NewServer(grpc.UnknownServiceHandler(proxyHandler(backendAddr)))
+	if err := unix.Bind(fd, localAddr); err != nil {
+		log.Printf("[grpc-tracker] ⚠️ cannot bind (expected if port already in use): %v", err)
+	}
 
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("[grpc-tracker] ❌ Serve error: %v", err)
+	buf := make([]byte, 65535)
+	for {
+		n, _, err := unix.Recvfrom(fd, buf, 0)
+		if err != nil {
+			if errorsIsTimeout(err) {
+				continue
+			}
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		parseGrpcFrame(buf[:n])
 	}
 }
 
-func proxyHandler(backendAddr string) grpc.StreamHandler {
-	return func(srv interface{}, serverStream grpc.ServerStream) error {
-		method, _ := grpc.MethodFromServerStream(serverStream)
-		log.Printf("[grpc-tracker] 🧠 RPC called: %s", method)
+func errorsIsTimeout(err error) bool {
+	return strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "resource temporarily unavailable")
+}
 
-		conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-
-		clientDesc := &grpc.StreamDesc{
-			ServerStreams: true,
-			ClientStreams: true,
-		}
-
-		clientStream, err := conn.NewStream(serverStream.Context(), clientDesc, method)
-		if err != nil {
-			return err
-		}
-
-		errc := make(chan error, 2)
-
-		// client → backend
-		go func() {
-			for {
-				req := new([]byte)
-				if err := serverStream.RecvMsg(req); err != nil {
-					errc <- err
-					return
-				}
-				if err := clientStream.SendMsg(req); err != nil {
-					errc <- err
-					return
-				}
-			}
-		}()
-
-		// backend → client
-		go func() {
-			for {
-				resp := new([]byte)
-				if err := clientStream.RecvMsg(resp); err != nil {
-					errc <- err
-					return
-				}
-				if err := serverStream.SendMsg(resp); err != nil {
-					errc <- err
-					return
-				}
-			}
-		}()
-
-		err = <-errc
-		if err == io.EOF {
-			return nil
-		}
-		return err
+func parseGrpcFrame(packet []byte) {
+	// Skip IP + TCP headers roughly (~40 bytes)
+	if len(packet) < 40 {
+		return
 	}
+	payload := packet[40:]
+
+	if bytes.Contains(payload, []byte(":path")) {
+		idx := bytes.Index(payload, []byte(":path"))
+		if idx >= 0 {
+			pathStart := idx + len(":path")
+			snip := payload[pathStart:]
+			// extract /service/method style
+			if p := extractGrpcPath(snip); p != "" {
+				log.Printf("[grpc-tracker] 🚀 %s", p)
+			}
+		}
+	}
+}
+
+func extractGrpcPath(data []byte) string {
+	s := string(data)
+	if i := strings.Index(s, "/"); i >= 0 {
+		s = s[i:]
+		if j := strings.IndexAny(s, "\r\n "); j >= 0 {
+			s = s[:j]
+		}
+		if strings.Count(s, "/") >= 2 {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
 }
