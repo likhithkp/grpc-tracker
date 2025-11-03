@@ -1,185 +1,136 @@
-// package grpctracker
+package grpctracker
 
-// import (
-// 	"io"
-// 	"log"
-// 	"net"
-// 	"os"
-
-// 	"google.golang.org/grpc"
-// 	"google.golang.org/grpc/credentials/insecure"
-// 	"google.golang.org/protobuf/proto"
-// 	"google.golang.org/protobuf/reflect/protoreflect"
-// )
-
-// // --- modify response fields dynamically ---
-// func modifyTripStats(m proto.Message) {
-// 	if m == nil {
-// 		return
-// 	}
-// 	v := m.ProtoReflect()
-// 	dataField := v.Descriptor().Fields().ByName("data")
-// 	if dataField == nil {
-// 		return
-// 	}
-// 	data := v.Mutable(dataField).Message()
-
-// 	set := func(name string, val int64) {
-// 		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
-// 			data.Set(f, protoreflect.ValueOfInt64(val))
-// 		}
-// 	}
-
-// 	set("acceptedTrips", 5000)
-// 	set("canceledTrips", 23000)
-// 	set("ongoingTrips", 3000)
-// 	set("scheduledTrips", 8000)
-// 	set("completedTrips", 16000)
-// 	set("pendingRequests", 10000)
-// 	log.Println("[grpc-tracker] ✅ Modified GetTripStats response fields")
-// }
-
-// // --- proxy that forwards every request ---
-// func startProxy() {
-// 	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
-// 	if listenAddr == "" {
-// 		listenAddr = ":4440"
-// 	}
-// 	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-// 	if backendAddr == "" {
-// 		backendAddr = "127.0.0.1:4430"
-// 	}
-
-// 	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s → backend %s", listenAddr, backendAddr)
-
-// 	lis, err := net.Listen("tcp", listenAddr)
-// 	if err != nil {
-// 		log.Fatalf("[grpc-tracker] ❌ failed to listen: %v", err)
-// 	}
-
-// 	server := grpc.NewServer(
-// 		grpc.UnknownServiceHandler(func(srv interface{}, stream grpc.ServerStream) error {
-// 			fullMethod, _ := grpc.MethodFromServerStream(stream)
-// 			log.Printf("[grpc-tracker] 🔁 proxying %s", fullMethod)
-
-// 			// connect to backend
-// 			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-// 			if err != nil {
-// 				log.Printf("[grpc-tracker] ❌ backend dial failed: %v", err)
-// 				return err
-// 			}
-// 			defer conn.Close()
-
-// 			clientDesc := &grpc.StreamDesc{
-// 				ServerStreams: true,
-// 				ClientStreams: true,
-// 			}
-
-// 			clientCtx := stream.Context()
-// 			clientStream, err := conn.NewStream(clientCtx, clientDesc, fullMethod)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			errc := make(chan error, 2)
-
-// 			// client → backend
-// 			go func() {
-// 				for {
-// 					req := new([]byte)
-// 					if err := stream.RecvMsg(req); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 					if err := clientStream.SendMsg(req); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 				}
-// 			}()
-
-// 			// backend → client
-// 			go func() {
-// 				for {
-// 					resp := new([]byte)
-// 					if err := clientStream.RecvMsg(resp); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-
-// 					// decode & modify (only for GetTripStats)
-// 					if fullMethod == "/tripProto.TripService/GetTripStats" {
-// 						// try to unmarshal dynamically into proto.Message
-// 						var msg proto.Message
-// 						if err := proto.Unmarshal(*resp, msg); err == nil && msg != nil {
-// 							modifyTripStats(msg)
-// 							newBytes, _ := proto.Marshal(msg)
-// 							resp = &newBytes
-// 						}
-// 					}
-
-// 					if err := stream.SendMsg(resp); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 				}
-// 			}()
-
-// 			err = <-errc
-// 			if err == io.EOF {
-// 				return nil
-// 			}
-// 			return err
-// 		}),
-// 	)
-
-// 	if err := server.Serve(lis); err != nil {
-// 		log.Fatalf("[grpc-tracker] ❌ serve error: %v", err)
-// 	}
-// }
-
-// func init() {
-// 	go startProxy()
-// }
-
-package tracker
+// Import-only gRPC packet sniffer.
+// Usage: in main app, add:
+//   import _ "yourmodule/grpctracker"
+// Then run the process with permission to capture packets (sudo or setcap).
 
 import (
-	"io"
+	"bytes"
+	"fmt"
 	"log"
-	"net"
+	"os"
+	"regexp"
+	"time"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
+const (
+	snaplen    = 65535
+	promisc    = false
+	timeoutSec = 30
+	grpcPort   = 4430 // default gRPC port to sniff
+)
+
+var methodRegex = regexp.MustCompile(`/[A-Za-z0-9_.]+/[A-Za-z0-9_]+`)
+
 func init() {
-	go startProxy(":4430", "127.0.0.1:4431")
+	go func() {
+		time.Sleep(1 * time.Second) // wait for app to boot
+		startPcapSniffer()
+	}()
 }
 
-func startProxy(listenAddr, targetAddr string) {
-	ln, err := net.Listen("tcp", listenAddr)
+func startPcapSniffer() {
+	if os.Geteuid() != 0 {
+		log.Printf("[grpc-tracker] ⚠️  not running as root — may need CAP_NET_RAW to capture packets. Try sudo or setcap.")
+	}
+
+	ifaces, err := pcap.FindAllDevs()
 	if err != nil {
-		log.Printf("[grpc-tracker] failed to listen: %v", err)
+		log.Printf("[grpc-tracker] ❌ FindAllDevs: %v", err)
 		return
 	}
-	log.Printf("[grpc-tracker] proxy listening on %s -> %s", listenAddr, targetAddr)
 
-	for {
-		clientConn, err := ln.Accept()
-		if err != nil {
-			log.Printf("[grpc-tracker] accept err: %v", err)
-			continue
-		}
-
-		go func() {
-			backendConn, err := net.Dial("tcp", targetAddr)
-			if err != nil {
-				log.Printf("[grpc-tracker] dial backend err: %v", err)
-				clientConn.Close()
-				return
+	// Prefer loopback interface
+	var device string
+	for _, i := range ifaces {
+		for _, addr := range i.Addresses {
+			if addr.IP.IsLoopback() {
+				device = i.Name
+				break
 			}
+		}
+		if device != "" {
+			break
+		}
+	}
+	if device == "" {
+		if len(ifaces) == 0 {
+			log.Printf("[grpc-tracker] ❌ no devices found for pcap")
+			return
+		}
+		device = ifaces[0].Name
+	}
 
-			log.Printf("[grpc-tracker] new connection %s → %s", clientConn.RemoteAddr(), targetAddr)
-			go io.Copy(backendConn, clientConn)
-			io.Copy(clientConn, backendConn)
-		}()
+	log.Printf("[grpc-tracker] 🎧 capturing on %s for tcp port %d", device, grpcPort)
+
+	handle, err := pcap.OpenLive(device, snaplen, promisc, pcap.BlockForever)
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ OpenLive: %v", err)
+		return
+	}
+	defer handle.Close()
+
+	bpf := fmt.Sprintf("tcp port %d", grpcPort)
+	if err := handle.SetBPFFilter(bpf); err != nil {
+		log.Printf("[grpc-tracker] ⚠️  failed to set BPF filter (%s): %v", bpf, err)
+	}
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	seen := map[string]time.Time{}
+
+	for pkt := range packetSource.Packets() {
+		processPacket(pkt, seen)
+	}
+}
+
+func processPacket(pkt gopacket.Packet, seen map[string]time.Time) {
+	tcpLayer := pkt.Layer(layers.LayerTypeTCP)
+	if tcpLayer == nil {
+		return
+	}
+	tcp, _ := tcpLayer.(*layers.TCP)
+	if tcp == nil || len(tcp.Payload) == 0 {
+		return
+	}
+	payload := tcp.Payload
+
+	// Check for /Service/Method patterns
+	if bytes.Contains(payload, []byte("/")) {
+		matches := methodRegex.FindAll(payload, -1)
+		for _, m := range matches {
+			method := string(m)
+			if t, ok := seen[method]; ok && time.Since(t) < 5*time.Second {
+				continue
+			}
+			seen[method] = time.Now()
+			log.Printf("[grpc-tracker] 🚀 detected gRPC method: %s", method)
+		}
+	}
+
+	// Heuristic: detect :path headers
+	if bytes.Contains(payload, []byte(":path")) {
+		idx := bytes.Index(payload, []byte(":path"))
+		if idx >= 0 {
+			sn := payload[idx:]
+			if loc := bytes.Index(sn, []byte("/")); loc >= 0 {
+				rest := sn[loc:]
+				end := bytes.IndexAny(rest, "\r\n \x00")
+				if end > 0 {
+					cand := string(rest[:end])
+					if methodRegex.MatchString(cand) {
+						method := cand
+						if t, ok := seen[method]; !ok || time.Since(t) >= 5*time.Second {
+							seen[method] = time.Now()
+							log.Printf("[grpc-tracker] 🔎 detected (path) gRPC method: %s", method)
+						}
+					}
+				}
+			}
+		}
 	}
 }
