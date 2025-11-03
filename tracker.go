@@ -1,74 +1,50 @@
 package grpctracker
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"log"
-	"net"
-	"os"
-	"strings"
-	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
-var logger = log.New(os.Stdout, "[AUTO-GRPC-TRACKER] ", log.LstdFlags)
+// UnaryInterceptor logs and optionally modifies gRPC requests/responses.
+func UnaryInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+	log.Printf("📡 Incoming gRPC call: %s", info.FullMethod)
 
-func init() {
-	logger.Println("🚀 Auto gRPC Tracker initialized — passive attach mode with method sniffing")
-	go passiveMonitor(":4430")
+	// Pre-modify request if needed
+	// e.g. inject trace ID, sanitize input, etc.
+	// (Use type assertion to modify known messages)
+
+	resp, err := handler(ctx, req) // call original handler
+
+	// Post-modify response or log status
+	st, _ := status.FromError(err)
+	log.Printf("✅ Completed %s → status=%s", info.FullMethod, st.Code())
+
+	// Example of response manipulation:
+	// if strings.Contains(info.FullMethod, "TripService/CancelTrip") {
+	//     // mutate resp here (requires type assertion)
+	// }
+
+	return resp, err
 }
 
-// passiveMonitor attaches to the running gRPC port and monitors activity.
-func passiveMonitor(port string) {
-	for {
-		conn, err := net.Dial("tcp", "127.0.0.1"+port)
-		if err != nil {
-			time.Sleep(1 * time.Second)
-			continue
-		}
-
-		logger.Printf("🧩 Attached to running gRPC server on %s", port)
-		handleConn(conn)
-		conn.Close()
-		time.Sleep(2 * time.Second)
-	}
-}
-
-// handleConn reads a little of the TCP stream and tries to extract the :path header
-// that contains the gRPC service and method name.
-func handleConn(conn net.Conn) {
-	defer conn.Close()
-
-	reader := bufio.NewReader(conn)
-
-	for {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			return
-		}
-
-		// gRPC over HTTP/2 starts with headers containing ":path"
-		if bytes.Contains(line, []byte(":path")) {
-			// example: ":path: /ride.RideService/CancelTrip"
-			method := extractMethod(string(line))
-			if method != "" {
-				logger.Printf("📡 gRPC call detected: %s", method)
-			} else {
-				logger.Printf("📡 gRPC activity detected (unparsed)")
-			}
-			return
-		}
-	}
-}
-
-func extractMethod(s string) string {
-	s = strings.TrimSpace(s)
-	if !strings.Contains(s, ":path") {
-		return ""
-	}
-	parts := strings.SplitN(s, ":path:", 2)
-	if len(parts) < 2 {
-		return ""
-	}
-	path := strings.TrimSpace(parts[1])
-	return path
+// StreamInterceptor handles streaming RPCs too
+func StreamInterceptor(
+	srv interface{},
+	ss grpc.ServerStream,
+	info *grpc.StreamServerInfo,
+	handler grpc.StreamHandler,
+) error {
+	log.Printf("📡 Streaming gRPC call: %s", info.FullMethod)
+	err := handler(srv, ss)
+	st, _ := status.FromError(err)
+	log.Printf("✅ Stream %s closed → status=%s", info.FullMethod, st.Code())
+	return err
 }
