@@ -109,41 +109,24 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-// Automatically starts proxy when imported.
+// --- entrypoint ---
 func init() {
 	go startProxy()
 }
 
 func startProxy() {
-	listenAddr := os.Getenv("GRPC_TRACKER_ADDR")
-	if listenAddr == "" {
-		listenAddr = ":4440"
-	}
+	listenAddr := getEnv("GRPC_TRACKER_ADDR", ":4440")
+	backendAddr := getEnv("GRPC_BACKEND_ADDR", "127.0.0.1:4430")
+	modifyMethod := getEnv("GRPC_MODIFY_METHOD", "/tripProto.TripService/GetTripStats")
+	responseTypeName := getEnv("GRPC_RESPONSE_TYPE", "tripProto.GetTripStatsResponse")
 
-	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-	if backendAddr == "" {
-		backendAddr = "127.0.0.1:4430"
-	}
-
-	modifyMethod := os.Getenv("GRPC_MODIFY_METHOD")
-	if modifyMethod == "" {
-		modifyMethod = "/tripProto.TripService/GetTripStats"
-	}
-
-	responseTypeName := os.Getenv("GRPC_RESPONSE_TYPE")
-	if responseTypeName == "" {
-		responseTypeName = "tripProto.GetTripStatsResponse"
-	}
-
-	log.Printf("[grpc-tracker] 🚀 proxy listening on %s -> %s (method=%s type=%s)",
-		listenAddr, backendAddr, modifyMethod, responseTypeName)
+	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s -> %s", listenAddr, backendAddr)
 
 	lis, err := net.Listen("tcp", listenAddr)
 	if err != nil {
@@ -156,7 +139,7 @@ func startProxy() {
 
 			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
-				log.Printf("[grpc-tracker] dial backend error: %v", err)
+				log.Printf("[grpc-tracker] dial error: %v", err)
 				return err
 			}
 			defer conn.Close()
@@ -169,7 +152,7 @@ func startProxy() {
 			desc := &grpc.StreamDesc{StreamName: "proxy", ServerStreams: true, ClientStreams: true}
 			clientStream, err := conn.NewStream(clientCtx, desc, fullMethod)
 			if err != nil {
-				log.Printf("[grpc-tracker] new stream error: %v", err)
+				log.Printf("[grpc-tracker] stream create error: %v", err)
 				return err
 			}
 
@@ -178,12 +161,12 @@ func startProxy() {
 			// Client -> Backend
 			go func() {
 				for {
-					var inBytes []byte
-					if err := stream.RecvMsg(&inBytes); err != nil {
+					var in dynamicpb.Message
+					if err := stream.RecvMsg(&in); err != nil {
 						errc <- err
 						return
 					}
-					if err := clientStream.SendMsg(inBytes); err != nil {
+					if err := clientStream.SendMsg(&in); err != nil {
 						errc <- err
 						return
 					}
@@ -193,21 +176,26 @@ func startProxy() {
 			// Backend -> Client
 			go func() {
 				for {
-					var outBytes []byte
-					if err := clientStream.RecvMsg(&outBytes); err != nil {
+					msgType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(responseTypeName))
+					if err != nil {
+						log.Printf("[grpc-tracker] type lookup failed: %v", err)
 						errc <- err
 						return
 					}
 
-					if fullMethod == modifyMethod && len(outBytes) > 0 {
-						modified, ok := tryModifyResponse(outBytes, responseTypeName)
-						if ok {
-							outBytes = modified
-							log.Printf("[grpc-tracker] ✏️ modified response for %s", fullMethod)
-						}
+					resp := dynamicpb.NewMessage(msgType.Descriptor())
+					if err := clientStream.RecvMsg(resp); err != nil {
+						errc <- err
+						return
 					}
 
-					if err := stream.SendMsg(outBytes); err != nil {
+					// Modify only our target method
+					if fullMethod == modifyMethod {
+						modifyTripStatsDynamic(resp)
+						log.Printf("[grpc-tracker] ✏️ modified response for %s", fullMethod)
+					}
+
+					if err := stream.SendMsg(resp); err != nil {
 						errc <- err
 						return
 					}
@@ -227,34 +215,6 @@ func startProxy() {
 	}
 }
 
-// --- Try to decode and modify response dynamically ---
-func tryModifyResponse(data []byte, typeName string) ([]byte, bool) {
-	msgType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(typeName))
-	if err != nil {
-		log.Printf("[grpc-tracker] ❌ type lookup failed: %v", err)
-		return nil, false
-	}
-
-	msgDesc := msgType.Descriptor()
-	dm := dynamicpb.NewMessage(msgDesc)
-
-	if err := proto.Unmarshal(data, dm); err != nil {
-		log.Printf("[grpc-tracker] ❌ failed to unmarshal: %v", err)
-		return nil, false
-	}
-
-	modifyTripStatsDynamic(dm)
-
-	newBytes, err := proto.Marshal(dm)
-	if err != nil {
-		log.Printf("[grpc-tracker] ❌ failed to marshal after modification: %v", err)
-		return nil, false
-	}
-
-	return newBytes, true
-}
-
-// --- Modify data fields dynamically ---
 func modifyTripStatsDynamic(m proto.Message) {
 	if m == nil {
 		return
@@ -280,4 +240,11 @@ func modifyTripStatsDynamic(m proto.Message) {
 	set("scheduledTrips", 8000)
 	set("completedTrips", 16000)
 	set("pendingRequests", 10000)
+}
+
+func getEnv(key, def string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return def
 }
