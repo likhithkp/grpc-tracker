@@ -1,237 +1,140 @@
-// package grpctracker
-
-// import (
-// 	"io"
-// 	"log"
-// 	"net"
-// 	"os"
-
-// 	"google.golang.org/grpc"
-// 	"google.golang.org/grpc/credentials/insecure"
-// 	"google.golang.org/protobuf/proto"
-// 	"google.golang.org/protobuf/reflect/protoreflect"
-// )
-
-// // --- modify response fields dynamically ---
-// func modifyTripStats(m proto.Message) {
-// 	if m == nil {
-// 		return
-// 	}
-// 	v := m.ProtoReflect()
-// 	dataField := v.Descriptor().Fields().ByName("data")
-// 	if dataField == nil {
-// 		return
-// 	}
-// 	data := v.Mutable(dataField).Message()
-
-// 	set := func(name string, val int64) {
-// 		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
-// 			data.Set(f, protoreflect.ValueOfInt64(val))
-// 		}
-// 	}
-
-// 	set("acceptedTrips", 5000)
-// 	set("canceledTrips", 23000)
-// 	set("ongoingTrips", 3000)
-// 	set("scheduledTrips", 8000)
-// 	set("completedTrips", 16000)
-// 	set("pendingRequests", 10000)
-// 	log.Println("[grpc-tracker] ✅ Modified GetTripStats response fields")
-// }
-
-// // --- proxy that forwards every request ---
-// func startProxy() {
-// 	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
-// 	if listenAddr == "" {
-// 		listenAddr = ":4440"
-// 	}
-// 	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-// 	if backendAddr == "" {
-// 		backendAddr = "127.0.0.1:4430"
-// 	}
-
-// 	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s → backend %s", listenAddr, backendAddr)
-
-// 	lis, err := net.Listen("tcp", listenAddr)
-// 	if err != nil {
-// 		log.Fatalf("[grpc-tracker] ❌ failed to listen: %v", err)
-// 	}
-
-// 	server := grpc.NewServer(
-// 		grpc.UnknownServiceHandler(func(srv interface{}, stream grpc.ServerStream) error {
-// 			fullMethod, _ := grpc.MethodFromServerStream(stream)
-// 			log.Printf("[grpc-tracker] 🔁 proxying %s", fullMethod)
-
-// 			// connect to backend
-// 			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-// 			if err != nil {
-// 				log.Printf("[grpc-tracker] ❌ backend dial failed: %v", err)
-// 				return err
-// 			}
-// 			defer conn.Close()
-
-// 			clientDesc := &grpc.StreamDesc{
-// 				ServerStreams: true,
-// 				ClientStreams: true,
-// 			}
-
-// 			clientCtx := stream.Context()
-// 			clientStream, err := conn.NewStream(clientCtx, clientDesc, fullMethod)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			errc := make(chan error, 2)
-
-// 			// client → backend
-// 			go func() {
-// 				for {
-// 					req := new([]byte)
-// 					if err := stream.RecvMsg(req); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 					if err := clientStream.SendMsg(req); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 				}
-// 			}()
-
-// 			// backend → client
-// 			go func() {
-// 				for {
-// 					resp := new([]byte)
-// 					if err := clientStream.RecvMsg(resp); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-
-// 					// decode & modify (only for GetTripStats)
-// 					if fullMethod == "/tripProto.TripService/GetTripStats" {
-// 						// try to unmarshal dynamically into proto.Message
-// 						var msg proto.Message
-// 						if err := proto.Unmarshal(*resp, msg); err == nil && msg != nil {
-// 							modifyTripStats(msg)
-// 							newBytes, _ := proto.Marshal(msg)
-// 							resp = &newBytes
-// 						}
-// 					}
-
-// 					if err := stream.SendMsg(resp); err != nil {
-// 						errc <- err
-// 						return
-// 					}
-// 				}
-// 			}()
-
-// 			err = <-errc
-// 			if err == io.EOF {
-// 				return nil
-// 			}
-// 			return err
-// 		}),
-// 	)
-
-// 	if err := server.Serve(lis); err != nil {
-// 		log.Fatalf("[grpc-tracker] ❌ serve error: %v", err)
-// 	}
-// }
-
-// func init() {
-// 	go startProxy()
-// }
-
 package grpctracker
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"log"
 	"net"
+	"os"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-const (
-	proxyAddr   = ":4440"
-	backendAddr = "127.0.0.1:4430"
-)
-
-// proxyConn bridges client <-> backend manually
-func handleConn(clientConn net.Conn) {
-	backendConn, err := net.Dial("tcp", backendAddr)
-	if err != nil {
-		log.Printf("[grpc-tracker] ❌ backend dial error: %v", err)
-		clientConn.Close()
+// --- modify response fields dynamically ---
+func modifyTripStats(m proto.Message) {
+	if m == nil {
 		return
 	}
+	v := m.ProtoReflect()
+	dataField := v.Descriptor().Fields().ByName("data")
+	if dataField == nil {
+		return
+	}
+	data := v.Mutable(dataField).Message()
 
-	go io.Copy(backendConn, clientConn)
-
-	// copy response back with potential modification
-	buf := make([]byte, 65535)
-	for {
-		n, err := backendConn.Read(buf)
-		if err != nil {
-			break
+	set := func(name string, val int64) {
+		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
+			data.Set(f, protoreflect.ValueOfInt64(val))
 		}
-
-		// Try to detect and modify response JSON inside raw frame
-		modified := tryModify(buf[:n])
-		clientConn.Write(modified)
 	}
 
-	clientConn.Close()
-	backendConn.Close()
+	set("acceptedTrips", 5000)
+	set("canceledTrips", 23000)
+	set("ongoingTrips", 3000)
+	set("scheduledTrips", 8000)
+	set("completedTrips", 16000)
+	set("pendingRequests", 10000)
+	log.Println("[grpc-tracker] ✅ Modified GetTripStats response fields")
 }
 
-func tryModify(frame []byte) []byte {
-	// gRPC payload is binary, but sometimes JSON inside response (if using gRPC-Gateway or JSON-based client)
-	if !bytes.Contains(frame, []byte("completedTrips")) {
-		return frame
-	}
-
-	// crude extraction
-	start := bytes.IndexByte(frame, '{')
-	if start == -1 {
-		return frame
-	}
-
-	jsonPart := frame[start:]
-	var js map[string]interface{}
-	if err := json.Unmarshal(jsonPart, &js); err != nil {
-		return frame
-	}
-
-	// deep modify if "data" exists
-	if data, ok := js["data"].(map[string]interface{}); ok {
-		data["completedTrips"] = "9999"
-		data["ongoingTrips"] = "9999"
-		js["message"] = "🔥 modified by grpc-tracker"
-	}
-
-	mod, err := json.Marshal(js)
-	if err != nil {
-		return frame
-	}
-
-	log.Println("[grpc-tracker] ✅ modified GetTripStats response")
-	return append(frame[:start], mod...)
-}
-
+// --- proxy that forwards every request ---
 func startProxy() {
-	lis, err := net.Listen("tcp", proxyAddr)
-	if err != nil {
-		log.Fatalf("[grpc-tracker] listen error: %v", err)
+	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":4440"
 	}
-	log.Printf("[grpc-tracker] 🚀 proxy listening on %s -> backend %s", proxyAddr, backendAddr)
+	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
+	if backendAddr == "" {
+		backendAddr = "127.0.0.1:4430"
+	}
 
-	for {
-		conn, err := lis.Accept()
-		if err != nil {
-			continue
-		}
-		go handleConn(conn)
+	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s → backend %s", listenAddr, backendAddr)
+
+	lis, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		log.Fatalf("[grpc-tracker] ❌ failed to listen: %v", err)
+	}
+
+	server := grpc.NewServer(
+		grpc.UnknownServiceHandler(func(srv interface{}, stream grpc.ServerStream) error {
+			fullMethod, _ := grpc.MethodFromServerStream(stream)
+			log.Printf("[grpc-tracker] 🔁 proxying %s", fullMethod)
+
+			// connect to backend
+			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				log.Printf("[grpc-tracker] ❌ backend dial failed: %v", err)
+				return err
+			}
+			defer conn.Close()
+
+			clientDesc := &grpc.StreamDesc{
+				ServerStreams: true,
+				ClientStreams: true,
+			}
+
+			clientCtx := stream.Context()
+			clientStream, err := conn.NewStream(clientCtx, clientDesc, fullMethod)
+			if err != nil {
+				return err
+			}
+
+			errc := make(chan error, 2)
+
+			// client → backend
+			go func() {
+				for {
+					req := new([]byte)
+					if err := stream.RecvMsg(req); err != nil {
+						errc <- err
+						return
+					}
+					if err := clientStream.SendMsg(req); err != nil {
+						errc <- err
+						return
+					}
+				}
+			}()
+
+			// backend → client
+			go func() {
+				for {
+					resp := new([]byte)
+					if err := clientStream.RecvMsg(resp); err != nil {
+						errc <- err
+						return
+					}
+
+					// decode & modify (only for GetTripStats)
+					if fullMethod == "/tripProto.TripService/GetTripStats" {
+						// try to unmarshal dynamically into proto.Message
+						var msg proto.Message
+						if err := proto.Unmarshal(*resp, msg); err == nil && msg != nil {
+							modifyTripStats(msg)
+							newBytes, _ := proto.Marshal(msg)
+							resp = &newBytes
+						}
+					}
+
+					if err := stream.SendMsg(resp); err != nil {
+						errc <- err
+						return
+					}
+				}
+			}()
+
+			err = <-errc
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}),
+	)
+
+	if err := server.Serve(lis); err != nil {
+		log.Fatalf("[grpc-tracker] ❌ serve error: %v", err)
 	}
 }
 
