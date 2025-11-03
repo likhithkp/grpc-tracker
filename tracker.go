@@ -146,7 +146,6 @@ package grpctracker
 
 import (
 	"bufio"
-	"bytes"
 	"io"
 	"log"
 	"net"
@@ -195,28 +194,50 @@ func handleConn(client net.Conn, backend string) {
 	}
 	defer serverConn.Close()
 
-	go io.Copy(serverConn, client)
+	log.Printf("[grpc-tracker] 🔗 new proxy connection: client=%s -> backend=%s", client.RemoteAddr(), backend)
 
-	// Intercept inbound data to detect method names
-	bufReader := bufio.NewReader(serverConn)
+	// Regex for detecting gRPC method paths
 	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
 
-	for {
-		data := make([]byte, 4096)
-		n, err := bufReader.Read(data)
-		if n > 0 {
-			chunk := data[:n]
-			if m := methodRegex.Find(chunk); m != nil {
-				log.Printf("[grpc-tracker] 🧠 RPC called: %s", string(m))
+	// --- read client → backend (requests)
+	go func() {
+		reader := bufio.NewReader(client)
+		for {
+			data := make([]byte, 4096)
+			n, err := reader.Read(data)
+			if n > 0 {
+				chunk := data[:n]
+				if m := methodRegex.Find(chunk); m != nil {
+					log.Printf("[grpc-tracker] 🚀 Client calling: %s", string(m))
+				}
+				_, _ = serverConn.Write(chunk)
 			}
-			// echo to client
-			io.Copy(client, bytes.NewReader(chunk))
-		}
-		if err != nil {
-			if err != io.EOF {
-				log.Printf("[grpc-tracker] connection closed: %v", err)
+			if err != nil {
+				if err != io.EOF {
+					log.Printf("[grpc-tracker] client->server closed: %v", err)
+				}
+				return
 			}
-			break
 		}
-	}
+	}()
+
+	// --- read backend → client (responses)
+	go func() {
+		reader := bufio.NewReader(serverConn)
+		for {
+			data := make([]byte, 4096)
+			n, err := reader.Read(data)
+			if n > 0 {
+				chunk := data[:n]
+				// You could inspect response data here too if you want
+				_, _ = client.Write(chunk)
+			}
+			if err != nil {
+				if err != io.EOF {
+					log.Printf("[grpc-tracker] server->client closed: %v", err)
+				}
+				return
+			}
+		}
+	}()
 }
