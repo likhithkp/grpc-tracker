@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// interceptor just for demonstration
 func unaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{},
 		info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -50,16 +49,15 @@ func modifyTripStats(resp interface{}) {
 	set("pendingRequests", 10000)
 }
 
-// init starts its own server automatically when the package is imported.
 func init() {
 	go func() {
-		lis, err := net.Listen("tcp", ":50052") // choose any free port
+		lis, err := net.Listen("tcp", ":4430")
 		if err != nil {
 			log.Printf("[GRPC Tracker] failed to listen: %v", err)
 			return
 		}
 		s := grpc.NewServer(grpc.UnaryInterceptor(unaryInterceptor()))
-		log.Println("[GRPC Tracker] listening on :50052")
+		log.Println("[GRPC Tracker] listening on :4430")
 		if err := s.Serve(lis); err != nil {
 			log.Printf("[GRPC Tracker] server exited: %v", err)
 		}
