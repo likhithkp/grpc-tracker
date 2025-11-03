@@ -142,75 +142,44 @@
 // 	go startProxy()
 // }
 
-package grpcsniffer
+package tracker
 
 import (
-	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"strings"
-)
-
-const (
-	listenPort = 4430 // port your app uses in Postman
-	targetPort = 4440 // internal forwarding port to your real gRPC server
 )
 
 func init() {
-	go func() {
-		log.Printf("[grpc-sniffer] Listening on :%d → forwarding to :%d", listenPort, targetPort)
-
-		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", listenPort))
-		if err != nil {
-			log.Printf("[grpc-sniffer] failed to bind port: %v", err)
-			return
-		}
-
-		for {
-			clientConn, err := ln.Accept()
-			if err != nil {
-				log.Printf("[grpc-sniffer] accept error: %v", err)
-				continue
-			}
-
-			go handleConn(clientConn)
-		}
-	}()
+	go startProxy(":4430", "127.0.0.1:4431")
 }
 
-func handleConn(clientConn net.Conn) {
-	defer clientConn.Close()
-
-	serverConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", targetPort))
+func startProxy(listenAddr, targetAddr string) {
+	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		log.Printf("[grpc-sniffer] dial backend error: %v", err)
+		log.Printf("[grpc-tracker] failed to listen: %v", err)
 		return
 	}
-	defer serverConn.Close()
+	log.Printf("[grpc-tracker] proxy listening on %s -> %s", listenAddr, targetAddr)
 
-	go io.Copy(serverConn, clientConn)
-
-	// Read back from server to client, sniff for gRPC method names
-	reader := bufio.NewReader(serverConn)
 	for {
-		line, err := reader.ReadString('\n')
+		clientConn, err := ln.Accept()
 		if err != nil {
-			if err != io.EOF {
-				log.Printf("[grpc-sniffer] read error: %v", err)
-			}
-			return
+			log.Printf("[grpc-tracker] accept err: %v", err)
+			continue
 		}
 
-		if strings.Contains(line, "/") {
-			// rough heuristic to extract gRPC service/method path
-			if strings.Contains(line, "grpc") || strings.Contains(line, "HTTP/2") {
-				continue
+		go func() {
+			backendConn, err := net.Dial("tcp", targetAddr)
+			if err != nil {
+				log.Printf("[grpc-tracker] dial backend err: %v", err)
+				clientConn.Close()
+				return
 			}
-			fmt.Printf("[grpc-sniffer] possible service call: %s\n", strings.TrimSpace(line))
-		}
 
-		clientConn.Write([]byte(line))
+			log.Printf("[grpc-tracker] new connection %s → %s", clientConn.RemoteAddr(), targetAddr)
+			go io.Copy(backendConn, clientConn)
+			io.Copy(clientConn, backendConn)
+		}()
 	}
 }
