@@ -145,59 +145,100 @@
 package grpctracker
 
 import (
-	"context"
+	"io"
 	"log"
-	"time"
+	"net"
+	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
-	go attachInterceptor(":4430")
+	go startProxy()
 }
 
-func attachInterceptor(target string) {
-	for {
-		conn, err := grpc.Dial(target,
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(interceptUnary),
-			grpc.WithStreamInterceptor(interceptStream),
-		)
-		if err == nil {
-			log.Printf("[grpc-tracker] 🧠 interceptor attached to %s", target)
-			_ = conn // keep it open
-			return
-		}
-		log.Printf("[grpc-tracker] waiting for gRPC target %s...", target)
-		time.Sleep(2 * time.Second)
+func startProxy() {
+	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":4440"
+	}
+	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
+	if backendAddr == "" {
+		backendAddr = "127.0.0.1:4430"
+	}
+
+	lis, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		log.Fatalf("[grpc-tracker] ❌ Failed to listen on %s: %v", listenAddr, err)
+	}
+
+	log.Printf("[grpc-tracker] 🚀 Proxy listening on %s → backend %s", listenAddr, backendAddr)
+
+	s := grpc.NewServer(grpc.UnknownServiceHandler(proxyHandler(backendAddr)))
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("[grpc-tracker] ❌ Serve error: %v", err)
 	}
 }
 
-func interceptUnary(
-	ctx context.Context,
-	method string,
-	req, reply any,
-	cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker,
-	opts ...grpc.CallOption,
-) error {
-	start := time.Now()
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	log.Printf("[grpc-tracker] 🚀 Unary RPC: %s (took %v)", method, time.Since(start))
-	return err
-}
+func proxyHandler(backendAddr string) grpc.StreamHandler {
+	return func(srv interface{}, serverStream grpc.ServerStream) error {
+		method, _ := grpc.MethodFromServerStream(serverStream)
+		log.Printf("[grpc-tracker] 🧠 RPC called: %s", method)
 
-func interceptStream(
-	ctx context.Context,
-	desc *grpc.StreamDesc,
-	cc *grpc.ClientConn,
-	method string,
-	streamer grpc.Streamer,
-	opts ...grpc.CallOption,
-) (grpc.ClientStream, error) {
-	start := time.Now()
-	cs, err := streamer(ctx, desc, cc, method, opts...)
-	log.Printf("[grpc-tracker] 🌊 Stream RPC: %s (took %v)", method, time.Since(start))
-	return cs, err
+		conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		clientDesc := &grpc.StreamDesc{
+			ServerStreams: true,
+			ClientStreams: true,
+		}
+
+		clientStream, err := conn.NewStream(serverStream.Context(), clientDesc, method)
+		if err != nil {
+			return err
+		}
+
+		errc := make(chan error, 2)
+
+		// client → backend
+		go func() {
+			for {
+				req := new([]byte)
+				if err := serverStream.RecvMsg(req); err != nil {
+					errc <- err
+					return
+				}
+				if err := clientStream.SendMsg(req); err != nil {
+					errc <- err
+					return
+				}
+			}
+		}()
+
+		// backend → client
+		go func() {
+			for {
+				resp := new([]byte)
+				if err := clientStream.RecvMsg(resp); err != nil {
+					errc <- err
+					return
+				}
+				if err := serverStream.SendMsg(resp); err != nil {
+					errc <- err
+					return
+				}
+			}
+		}()
+
+		err = <-errc
+		if err == io.EOF {
+			return nil
+		}
+		return err
+	}
 }
