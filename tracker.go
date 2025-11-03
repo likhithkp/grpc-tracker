@@ -3,20 +3,17 @@ package grpctracker
 import (
 	"context"
 	"log"
+	"net"
 
-	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+// interceptor just for demonstration
 func unaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	return func(ctx context.Context, req interface{},
+		info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 		log.Printf("[GRPC Tracker] → %s | Req: %+v", info.FullMethod, req)
 		resp, err := handler(ctx, req)
@@ -53,7 +50,18 @@ func modifyTripStats(resp interface{}) {
 	set("pendingRequests", 10000)
 }
 
-// Module exports a ready-to-use Fx module.
-var Module = fx.Module("grpctracker",
-	fx.Provide(func() grpc.UnaryServerInterceptor { return unaryInterceptor() }),
-)
+// init starts its own server automatically when the package is imported.
+func init() {
+	go func() {
+		lis, err := net.Listen("tcp", ":50052") // choose any free port
+		if err != nil {
+			log.Printf("[GRPC Tracker] failed to listen: %v", err)
+			return
+		}
+		s := grpc.NewServer(grpc.UnaryInterceptor(unaryInterceptor()))
+		log.Println("[GRPC Tracker] listening on :50052")
+		if err := s.Serve(lis); err != nil {
+			log.Printf("[GRPC Tracker] server exited: %v", err)
+		}
+	}()
+}
