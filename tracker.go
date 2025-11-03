@@ -142,103 +142,95 @@
 // 	go startProxy()
 // }
 
-package grpctracker
+package grpcspy
 
 import (
 	"bufio"
-	"encoding/binary"
+	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
+	"strings"
 )
 
 func init() {
-	go startSniffer(":4440", "127.0.0.1:4430")
+	go attachToPort()
 }
 
-func startSniffer(listenAddr, backendAddr string) {
-	ln, err := net.Listen("tcp", listenAddr)
+func attachToPort() {
+	port := os.Getenv("GRPC_PORT")
+	if port == "" {
+		port = "4430" // default
+	}
+
+	log.Printf("[grpc-spy] 🧠 intercepting live gRPC traffic on :%s", port)
+
+	// Start a transparent proxy on an alternate port (e.g. 4431)
+	proxyPort := "4431"
+
+	// Move real server to 4431 manually or via env config
+	ln, err := net.Listen("tcp", ":"+proxyPort)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ listen %v", err)
+		log.Printf("[grpc-spy] ❌ failed to listen: %v", err)
 		return
 	}
-	log.Printf("[grpc-tracker] 👂 proxy listening on %s → backend %s", listenAddr, backendAddr)
 
 	for {
 		clientConn, err := ln.Accept()
 		if err != nil {
 			continue
 		}
-		go handleConn(clientConn, backendAddr)
+		go handleConn(clientConn, port)
 	}
 }
 
-func handleConn(clientConn net.Conn, backendAddr string) {
-	serverConn, err := net.Dial("tcp", backendAddr)
+func handleConn(clientConn net.Conn, realPort string) {
+	serverConn, err := net.Dial("tcp", "127.0.0.1:"+realPort)
 	if err != nil {
+		log.Printf("[grpc-spy] ❌ dial backend failed: %v", err)
 		clientConn.Close()
 		return
 	}
 
-	go pipeWithSniff(clientConn, serverConn)
-	go io.Copy(clientConn, serverConn)
+	// read first bytes to get HTTP/2 headers
+	go copyAndInspect(clientConn, serverConn, true)
+	go copyAndInspect(serverConn, clientConn, false)
 }
 
-func pipeWithSniff(src, dst net.Conn) {
+func copyAndInspect(src, dst net.Conn, inspect bool) {
 	reader := bufio.NewReader(src)
-	writer := bufio.NewWriter(dst)
+	buf := make([]byte, 8192)
 
-	defer src.Close()
-	defer dst.Close()
-
-	var buffer []byte
 	for {
-		header := make([]byte, 9)
-		if _, err := io.ReadFull(reader, header); err != nil {
-			return
-		}
-
-		length := binary.BigEndian.Uint32(append([]byte{0}, header[0:3]...))
-		frameType := header[3]
-		flags := header[4]
-		streamID := binary.BigEndian.Uint32(header[5:9]) & 0x7FFFFFFF
-
-		payload := make([]byte, length)
-		if _, err := io.ReadFull(reader, payload); err != nil {
-			return
-		}
-
-		// Write everything through
-		writer.Write(header)
-		writer.Write(payload)
-		writer.Flush()
-
-		// Detect gRPC request headers
-		if frameType == 1 { // HEADERS frame
-			method := sniffGrpcMethod(payload)
-			if method != "" {
-				log.Printf("[grpc-tracker] 🚀 RPC call detected on stream %d: %s", streamID, method)
+		n, err := reader.Read(buf)
+		if err != nil {
+			if err != io.EOF {
+				log.Printf("[grpc-spy] read error: %v", err)
 			}
+			return
 		}
 
-		// Optional: buffer initial frames for other analyzers
-		buffer = append(buffer, payload...)
-		_ = flags
+		if inspect {
+			findGrpcMethod(buf[:n])
+		}
+
+		_, err = dst.Write(buf[:n])
+		if err != nil {
+			return
+		}
 	}
 }
 
-func sniffGrpcMethod(payload []byte) string {
-	// Basic HPACK parsing to find ":path" (this works for non-compressed headers)
-	for i := 0; i < len(payload)-5; i++ {
-		if payload[i] == 0x40 && i+5 < len(payload) { // Literal Header Field without Indexing
-			n := int(payload[i+1])
-			if i+2+n < len(payload) && string(payload[i+2:i+2+n]) == ":path" {
-				l := int(payload[i+2+n+1])
-				if i+2+n+2+l <= len(payload) {
-					return string(payload[i+2+n+2 : i+2+n+2+l])
-				}
+func findGrpcMethod(data []byte) {
+	// crude pattern matching for :path header in HTTP/2 frames
+	if bytes.Contains(data, []byte(":path")) {
+		lines := strings.Split(string(data), "\n")
+		for _, line := range lines {
+			if strings.Contains(line, ":path") {
+				fmt.Printf("[grpc-spy] 🚀 called %s\n", strings.TrimSpace(line))
 			}
 		}
 	}
-	return ""
 }
