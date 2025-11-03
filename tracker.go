@@ -145,169 +145,93 @@
 package grpctracker
 
 import (
-	"context"
 	"io"
 	"log"
 	"net"
 	"os"
 	"time"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// --- modify TripStats response dynamically ---
-func modifyTripStats(resp proto.Message) {
-	if resp == nil {
-		return
-	}
+// A simple transparent TCP proxy. It forwards every TCP byte between client and backend.
+// This avoids any gRPC-level unmarshal/marshal errors because it does not interpret frames.
+//
+// Behavior:
+// - Listen on GRPC_TRACKER_ADDR (default ":4440")
+// - Dial GRPC_BACKEND_ADDR   (default "127.0.0.1:4430")
+// - For each incoming TCP connection, open a connection to backend and copy both ways.
 
-	v := resp.ProtoReflect()
-	dataField := v.Descriptor().Fields().ByName("data")
-	if dataField == nil {
-		return
-	}
-
-	data := v.Mutable(dataField).Message()
-
-	set := func(name string, val int64) {
-		f := data.Descriptor().Fields().ByName(protoreflect.Name(name))
-		if f != nil {
-			data.Set(f, protoreflect.ValueOfInt64(val))
-		}
-	}
-
-	set("acceptedTrips", 5000)
-	set("canceledTrips", 23000)
-	set("ongoingTrips", 3000)
-	set("scheduledTrips", 8000)
-	set("completedTrips", 16000)
-	set("pendingRequests", 10000)
-
-	log.Println("[grpc-tracker] ✅ Modified GetTripStats response")
-}
-
-// --- unary interceptor ---
-func trackerUnaryInterceptor(
-	ctx context.Context,
-	req interface{},
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler,
-) (interface{}, error) {
-	start := time.Now()
-	resp, err := handler(ctx, req)
-	if err != nil {
-		return resp, err
-	}
-
-	if info.FullMethod == "/tripProto.TripService/GetTripStats" {
-		if msg, ok := resp.(proto.Message); ok {
-			modifyTripStats(msg)
-		}
-	}
-
-	log.Printf("[grpc-tracker] %s took %s", info.FullMethod, time.Since(start))
-	return resp, nil
-}
-
-// --- proxy handler ---
-func makeProxyHandler(target string) grpc.StreamHandler {
-	return func(srv interface{}, stream grpc.ServerStream) error {
-		ctx := stream.Context()
-		md, _ := metadata.FromIncomingContext(ctx)
-		outCtx := metadata.NewOutgoingContext(ctx, md)
-
-		conn, err := grpc.DialContext(outCtx, target, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Printf("[grpc-tracker] ❌ connect to backend failed: %v", err)
-			return err
-		}
-		defer conn.Close()
-
-		fullMethod, ok := grpc.MethodFromServerStream(stream)
-		if !ok {
-			log.Println("[grpc-tracker] ❌ cannot get method name")
-			return err
-		}
-
-		client, err := grpc.NewClientStream(outCtx, &_StreamDesc, conn, fullMethod)
-		if err != nil {
-			return err
-		}
-
-		errCh := make(chan error, 2)
-		go func() {
-			for {
-				m := new([]byte)
-				if err := stream.RecvMsg(m); err != nil {
-					errCh <- err
-					return
-				}
-				if err := client.SendMsg(m); err != nil {
-					errCh <- err
-					return
-				}
-			}
-		}()
-		go func() {
-			for {
-				m := new([]byte)
-				if err := client.RecvMsg(m); err != nil {
-					errCh <- err
-					return
-				}
-				if err := stream.SendMsg(m); err != nil {
-					errCh <- err
-					return
-				}
-			}
-		}()
-		for i := 0; i < 2; i++ {
-			if err := <-errCh; err != io.EOF {
-				return err
-			}
-		}
-		return nil
-	}
-}
-
-var _StreamDesc = grpc.StreamDesc{
-	StreamName:    "proxy",
-	ServerStreams: true,
-	ClientStreams: true,
-}
-
-// --- auto start on import ---
 func init() {
-	go func() {
-		backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-		if backendAddr == "" {
-			backendAddr = "localhost:4430"
-		}
-		listenAddr := os.Getenv("GRPC_TRACKER_ADDR")
-		if listenAddr == "" {
-			listenAddr = ":4440"
-		}
+	go startTCPProxy()
+}
 
-		lis, err := net.Listen("tcp", listenAddr)
+func startTCPProxy() {
+	listenAddr := os.Getenv("GRPC_TRACKER_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":4440"
+	}
+	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
+	if backendAddr == "" {
+		backendAddr = "127.0.0.1:4430"
+	}
+
+	l, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ failed to listen on %s: %v", listenAddr, err)
+		return
+	}
+	log.Printf("[grpc-tracker] 🚀 TCP proxy listening on %s -> %s", listenAddr, backendAddr)
+
+	for {
+		clientConn, err := l.Accept()
 		if err != nil {
-			log.Printf("[grpc-tracker] ❌ listen failed on %s: %v", listenAddr, err)
-			return
+			log.Printf("[grpc-tracker] accept error: %v", err)
+			continue
 		}
 
-		srv := grpc.NewServer(
-			grpc.UnknownServiceHandler(makeProxyHandler(backendAddr)),
-			grpc.UnaryInterceptor(trackerUnaryInterceptor),
-		)
-		reflection.Register(srv)
+		// handle connection in goroutine
+		go func(c net.Conn) {
+			defer c.Close()
 
-		log.Printf("[grpc-tracker] 🚀 listening on %s -> %s", listenAddr, backendAddr)
-		if err := srv.Serve(lis); err != nil {
-			log.Printf("[grpc-tracker] ❌ Serve failed: %v", err)
-		}
-	}()
+			backendConn, err := net.DialTimeout("tcp", backendAddr, 5*time.Second)
+			if err != nil {
+				log.Printf("[grpc-tracker] failed to connect backend %s: %v", backendAddr, err)
+				return
+			}
+			defer backendConn.Close()
+
+			// log remote/local addresses
+			log.Printf("[grpc-tracker] new proxy connection: client=%s -> backend=%s", c.RemoteAddr(), backendConn.RemoteAddr())
+
+			// copy both directions
+			done := make(chan struct{}, 2)
+			// client -> backend
+			go func() {
+				_, err := io.Copy(backendConn, c)
+				if err != nil {
+					// EOF or other error — log at debug level
+					log.Printf("[grpc-tracker] copy client->backend closed: %v", err)
+				}
+				// close the write side to notify backend
+				_ = backendConn.(*net.TCPConn).CloseWrite()
+				done <- struct{}{}
+			}()
+
+			// backend -> client
+			go func() {
+				_, err := io.Copy(c, backendConn)
+				if err != nil {
+					log.Printf("[grpc-tracker] copy backend->client closed: %v", err)
+				}
+				// close the write side to notify client
+				_ = c.(*net.TCPConn).CloseWrite()
+				done <- struct{}{}
+			}()
+
+			// wait for one side to finish, then wait the other (so we cleanly close)
+			<-done
+			<-done
+
+			log.Printf("[grpc-tracker] connection closed: client=%s", c.RemoteAddr())
+		}(clientConn)
+	}
 }
