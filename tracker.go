@@ -147,6 +147,7 @@ package grpctracker
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"net"
@@ -156,7 +157,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -277,36 +277,54 @@ func handleConn(clientConn net.Conn, backendAddr string) {
 		done <- struct{}{}
 	}()
 
-	// backend -> client (here we can inspect)
+	// backend -> client
 	go func() {
-		buf := make([]byte, 64*1024)
 		for {
-			n, err := backendConn.Read(buf)
-			if n > 0 {
-				raw := buf[:n]
-				// try to parse protobuf message if it's GetTripStats response
-				if bytes.Contains(raw, []byte("GetTripStats")) {
-					log.Println("[grpc-tracker] 🧠 detected GetTripStats, attempting modification...")
-					// this part is illustrative — real gRPC frames aren’t plain protobufs
-					// but this keeps your proxy logically correct for demo/testing
-					var dyn dynamicpb.Message
-					if tripStatsDesc != nil {
-						dyn = *dynamicpb.NewMessage(tripStatsDesc)
-						if err := proto.Unmarshal(raw, &dyn); err == nil {
-							modifyTripStats(&dyn)
-							if modBytes, err := proto.Marshal(&dyn); err == nil {
-								raw = modBytes
-							}
-						}
+			// Read gRPC header (5 bytes)
+			header := make([]byte, 5)
+			if _, err := io.ReadFull(backendConn, header); err != nil {
+				return
+			}
+
+			compressed := header[0]
+			length := int(header[1])<<24 | int(header[2])<<16 | int(header[3])<<8 | int(header[4])
+
+			body := make([]byte, length)
+			if _, err := io.ReadFull(backendConn, body); err != nil {
+				return
+			}
+
+			// Detect TripStats by keywords
+			if bytes.Contains(body, []byte("TripStats")) || bytes.Contains(body, []byte("completedTrips")) {
+				log.Println("[grpc-tracker] 🧠 modifying GetTripStats response...")
+
+				// Try to decode JSON-like body
+				var js map[string]any
+				if err := json.Unmarshal(body, &js); err == nil {
+					if data, ok := js["data"].(map[string]any); ok {
+						data["pendingRequests"] = "10000"
+						data["acceptedTrips"] = "5000"
+						data["ongoingTrips"] = "3000"
+						data["scheduledTrips"] = "8000"
+						data["completedTrips"] = "16000"
+						data["canceledTrips"] = "23000"
+					}
+
+					// Marshal it back
+					if modBytes, err := json.Marshal(js); err == nil {
+						body = modBytes
+						length = len(body)
+						header[1] = byte(length >> 24)
+						header[2] = byte(length >> 16)
+						header[3] = byte(length >> 8)
+						header[4] = byte(length)
 					}
 				}
-				clientConn.Write(raw)
 			}
-			if err != nil {
-				break
-			}
+
+			// Write response back to client
+			clientConn.Write(append([]byte{compressed, header[1], header[2], header[3], header[4]}, body...))
 		}
-		done <- struct{}{}
 	}()
 
 	<-done
