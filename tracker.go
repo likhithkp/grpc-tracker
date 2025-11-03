@@ -109,22 +109,165 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-// --- modify response when we can decode protobuf message ---
-func modifyTripStatsProto(m proto.Message) {
+// Automatically starts proxy when imported.
+func init() {
+	go startProxy()
+}
+
+func startProxy() {
+	listenAddr := os.Getenv("GRPC_TRACKER_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":4440"
+	}
+
+	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
+	if backendAddr == "" {
+		backendAddr = "127.0.0.1:4430"
+	}
+
+	modifyMethod := os.Getenv("GRPC_MODIFY_METHOD")
+	if modifyMethod == "" {
+		modifyMethod = "/tripProto.TripService/GetTripStats"
+	}
+
+	responseTypeName := os.Getenv("GRPC_RESPONSE_TYPE")
+	if responseTypeName == "" {
+		responseTypeName = "tripProto.GetTripStatsResponse"
+	}
+
+	log.Printf("[grpc-tracker] 🚀 proxy listening on %s -> %s (method=%s type=%s)",
+		listenAddr, backendAddr, modifyMethod, responseTypeName)
+
+	lis, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		log.Fatalf("[grpc-tracker] listen error: %v", err)
+	}
+
+	server := grpc.NewServer(
+		grpc.UnknownServiceHandler(func(srv interface{}, stream grpc.ServerStream) error {
+			fullMethod, _ := grpc.MethodFromServerStream(stream)
+
+			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				log.Printf("[grpc-tracker] dial backend error: %v", err)
+				return err
+			}
+			defer conn.Close()
+
+			clientCtx := stream.Context()
+			if md, ok := metadata.FromIncomingContext(clientCtx); ok {
+				clientCtx = metadata.NewOutgoingContext(clientCtx, md)
+			}
+
+			desc := &grpc.StreamDesc{StreamName: "proxy", ServerStreams: true, ClientStreams: true}
+			clientStream, err := conn.NewStream(clientCtx, desc, fullMethod)
+			if err != nil {
+				log.Printf("[grpc-tracker] new stream error: %v", err)
+				return err
+			}
+
+			errc := make(chan error, 2)
+
+			// Client -> Backend
+			go func() {
+				for {
+					var inBytes []byte
+					if err := stream.RecvMsg(&inBytes); err != nil {
+						errc <- err
+						return
+					}
+					if err := clientStream.SendMsg(inBytes); err != nil {
+						errc <- err
+						return
+					}
+				}
+			}()
+
+			// Backend -> Client
+			go func() {
+				for {
+					var outBytes []byte
+					if err := clientStream.RecvMsg(&outBytes); err != nil {
+						errc <- err
+						return
+					}
+
+					if fullMethod == modifyMethod && len(outBytes) > 0 {
+						modified, ok := tryModifyResponse(outBytes, responseTypeName)
+						if ok {
+							outBytes = modified
+							log.Printf("[grpc-tracker] ✏️ modified response for %s", fullMethod)
+						}
+					}
+
+					if err := stream.SendMsg(outBytes); err != nil {
+						errc <- err
+						return
+					}
+				}
+			}()
+
+			err = <-errc
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}),
+	)
+
+	if err := server.Serve(lis); err != nil {
+		log.Fatalf("[grpc-tracker] serve error: %v", err)
+	}
+}
+
+// --- Try to decode and modify response dynamically ---
+func tryModifyResponse(data []byte, typeName string) ([]byte, bool) {
+	msgType, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(typeName))
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ type lookup failed: %v", err)
+		return nil, false
+	}
+
+	msgDesc := msgType.Descriptor()
+	dm := dynamicpb.NewMessage(msgDesc)
+
+	if err := proto.Unmarshal(data, dm); err != nil {
+		log.Printf("[grpc-tracker] ❌ failed to unmarshal: %v", err)
+		return nil, false
+	}
+
+	modifyTripStatsDynamic(dm)
+
+	newBytes, err := proto.Marshal(dm)
+	if err != nil {
+		log.Printf("[grpc-tracker] ❌ failed to marshal after modification: %v", err)
+		return nil, false
+	}
+
+	return newBytes, true
+}
+
+// --- Modify data fields dynamically ---
+func modifyTripStatsDynamic(m proto.Message) {
 	if m == nil {
 		return
 	}
 	v := m.ProtoReflect()
 	dataField := v.Descriptor().Fields().ByName("data")
 	if dataField == nil {
+		log.Println("[grpc-tracker] ⚠️ no 'data' field found in message")
 		return
 	}
 
 	data := v.Mutable(dataField).Message()
+
 	set := func(name string, val int64) {
 		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
 			data.Set(f, protoreflect.ValueOfInt64(val))
@@ -137,105 +280,4 @@ func modifyTripStatsProto(m proto.Message) {
 	set("scheduledTrips", 8000)
 	set("completedTrips", 16000)
 	set("pendingRequests", 10000)
-	log.Println("[grpc-tracker] ✅ modified GetTripStats response")
-}
-
-// --- start proxy automatically on import ---
-func init() {
-	go func() {
-		// The port your proxy listens on
-		listenAddr := os.Getenv("GRPC_TRACKER_ADDR")
-		if listenAddr == "" {
-			listenAddr = ":4440" // default proxy port
-		}
-
-		// The actual backend server address to forward to
-		backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-		if backendAddr == "" {
-			backendAddr = "127.0.0.1:4430" // your main ride-hail gRPC server
-		}
-
-		log.Printf("[grpc-tracker] 🚀 Listening on %s and forwarding to %s", listenAddr, backendAddr)
-
-		lis, err := net.Listen("tcp", listenAddr)
-		if err != nil {
-			log.Fatalf("[grpc-tracker] ❌ failed to listen: %v", err)
-		}
-
-		// proxy server
-		s := grpc.NewServer(grpc.UnknownServiceHandler(func(srv interface{}, stream grpc.ServerStream) error {
-			fullMethod, _ := grpc.MethodFromServerStream(stream)
-
-			// connect to real backend
-			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				log.Printf("[grpc-tracker] ❌ dial backend: %v", err)
-				return err
-			}
-			defer conn.Close()
-
-			clientCtx := stream.Context()
-			if md, ok := metadata.FromIncomingContext(clientCtx); ok {
-				clientCtx = metadata.NewOutgoingContext(clientCtx, md)
-			}
-
-			desc := &grpc.StreamDesc{
-				StreamName:    "proxy",
-				ServerStreams: true,
-				ClientStreams: true,
-			}
-			clientStream, err := conn.NewStream(clientCtx, desc, fullMethod)
-			if err != nil {
-				log.Printf("[grpc-tracker] ❌ new stream: %v", err)
-				return err
-			}
-
-			errc := make(chan error, 2)
-
-			// client → backend
-			go func() {
-				for {
-					var msg interface{}
-					if err := stream.RecvMsg(&msg); err != nil {
-						errc <- err
-						return
-					}
-					if err := clientStream.SendMsg(msg); err != nil {
-						errc <- err
-						return
-					}
-				}
-			}()
-
-			// backend → client
-			go func() {
-				for {
-					var recvMsg interface{}
-					if err := clientStream.RecvMsg(&recvMsg); err != nil {
-						errc <- err
-						return
-					}
-
-					if pm, ok := recvMsg.(proto.Message); ok && fullMethod == "/tripProto.TripService/GetTripStats" {
-						modifyTripStatsProto(pm)
-					}
-
-					if err := stream.SendMsg(recvMsg); err != nil {
-						errc <- err
-						return
-					}
-				}
-			}()
-
-			err = <-errc
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}))
-
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("[grpc-tracker] ❌ serve error: %v", err)
-		}
-	}()
 }
