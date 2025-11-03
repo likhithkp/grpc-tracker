@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/likhithkp/grpc-tracker/modifiers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -21,10 +22,10 @@ func UnaryInterceptor(
 	st, _ := status.FromError(err)
 	log.Printf("Completed %s → status=%s", info.FullMethod, st.Code())
 
-	// Example of response manipulation:
-	// if strings.Contains(info.FullMethod, "TripService/CancelTrip") {
-	//     // mutate resp here (requires type assertion)
-	// }
+	//modify response
+	if info.FullMethod == "/tripProto.TripService/GetTripStats" {
+		modifiers.ModifyTripStats(resp)
+	}
 
 	return resp, err
 }
