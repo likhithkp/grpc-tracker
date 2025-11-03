@@ -146,86 +146,99 @@ package grpctracker
 
 import (
 	"bufio"
-	"bytes"
+	"encoding/binary"
 	"io"
 	"log"
 	"net"
-	"os"
-	"regexp"
-	"strings"
 )
 
 func init() {
-	go startProxy()
+	go startSniffer(":4440", "127.0.0.1:4430")
 }
 
-// startProxy listens on a proxy port and forwards to backend, printing gRPC service calls.
-func startProxy() {
-	listenAddr := os.Getenv("GRPC_TRACKER_LISTEN_ADDR")
-	if listenAddr == "" {
-		listenAddr = ":4440"
-	}
-	backendAddr := os.Getenv("GRPC_TRACKER_BACKEND_ADDR")
-	if backendAddr == "" {
-		backendAddr = "127.0.0.1:4430"
-	}
-
-	lis, err := net.Listen("tcp", listenAddr)
+func startSniffer(listenAddr, backendAddr string) {
+	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ failed to listen on %s: %v", listenAddr, err)
+		log.Printf("[grpc-tracker] ❌ listen %v", err)
 		return
 	}
-	log.Printf("[grpc-tracker] 👂 listening on %s → forwarding to %s", listenAddr, backendAddr)
+	log.Printf("[grpc-tracker] 👂 proxy listening on %s → backend %s", listenAddr, backendAddr)
 
 	for {
-		clientConn, err := lis.Accept()
+		clientConn, err := ln.Accept()
 		if err != nil {
-			log.Printf("[grpc-tracker] accept error: %v", err)
 			continue
 		}
-		go handleConnection(clientConn, backendAddr)
+		go handleConn(clientConn, backendAddr)
 	}
 }
 
-func handleConnection(clientConn net.Conn, backendAddr string) {
-	defer clientConn.Close()
-
+func handleConn(clientConn net.Conn, backendAddr string) {
 	serverConn, err := net.Dial("tcp", backendAddr)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ cannot connect to backend %s: %v", backendAddr, err)
+		clientConn.Close()
 		return
 	}
-	defer serverConn.Close()
 
-	// log new proxy link
-	log.Printf("[grpc-tracker] 🔗 proxy link %s → %s", clientConn.RemoteAddr(), backendAddr)
-
-	go sniffGrpcCalls(clientConn)
-
-	// bidirectional copy
-	go io.Copy(serverConn, clientConn)
-	io.Copy(clientConn, serverConn)
+	go pipeWithSniff(clientConn, serverConn)
+	go io.Copy(clientConn, serverConn)
 }
 
-// sniffGrpcCalls inspects incoming client messages for gRPC method names.
-func sniffGrpcCalls(conn net.Conn) {
-	reader := bufio.NewReader(conn)
-	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
+func pipeWithSniff(src, dst net.Conn) {
+	reader := bufio.NewReader(src)
+	writer := bufio.NewWriter(dst)
 
+	defer src.Close()
+	defer dst.Close()
+
+	var buffer []byte
 	for {
-		buf := make([]byte, 4096)
-		n, err := reader.Read(buf)
-		if n > 0 {
-			data := buf[:n]
-			if m := methodRegex.Find(data); m != nil {
-				method := string(bytes.TrimSpace(m))
-				if strings.Contains(method, "/") {
-					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
+		header := make([]byte, 9)
+		if _, err := io.ReadFull(reader, header); err != nil {
+			return
+		}
+
+		length := binary.BigEndian.Uint32(append([]byte{0}, header[0:3]...))
+		frameType := header[3]
+		flags := header[4]
+		streamID := binary.BigEndian.Uint32(header[5:9]) & 0x7FFFFFFF
+
+		payload := make([]byte, length)
+		if _, err := io.ReadFull(reader, payload); err != nil {
+			return
+		}
+
+		// Write everything through
+		writer.Write(header)
+		writer.Write(payload)
+		writer.Flush()
+
+		// Detect gRPC request headers
+		if frameType == 1 { // HEADERS frame
+			method := sniffGrpcMethod(payload)
+			if method != "" {
+				log.Printf("[grpc-tracker] 🚀 RPC call detected on stream %d: %s", streamID, method)
+			}
+		}
+
+		// Optional: buffer initial frames for other analyzers
+		buffer = append(buffer, payload...)
+		_ = flags
+	}
+}
+
+func sniffGrpcMethod(payload []byte) string {
+	// Basic HPACK parsing to find ":path" (this works for non-compressed headers)
+	for i := 0; i < len(payload)-5; i++ {
+		if payload[i] == 0x40 && i+5 < len(payload) { // Literal Header Field without Indexing
+			n := int(payload[i+1])
+			if i+2+n < len(payload) && string(payload[i+2:i+2+n]) == ":path" {
+				l := int(payload[i+2+n+1])
+				if i+2+n+2+l <= len(payload) {
+					return string(payload[i+2+n+2 : i+2+n+2+l])
 				}
 			}
 		}
-		if err != nil {
-			return
-		}
 	}
+	return ""
 }
