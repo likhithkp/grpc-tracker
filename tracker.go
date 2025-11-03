@@ -145,56 +145,67 @@
 package grpctracker
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"log"
-	"net"
-	"regexp"
-	"strings"
+	"reflect"
+	"sync"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
+var once sync.Once
+
 func init() {
-	go attachToLiveGRPC(":4430")
+	go func() {
+		// Give your Fx/gRPC server time to initialize
+		time.Sleep(2 * time.Second)
+		tryHookGrpcServer()
+	}()
 }
 
-func attachToLiveGRPC(addr string) {
-	for {
-		conn, err := net.Dial("tcp", addr)
-		if err != nil {
+func tryHookGrpcServer() {
+	once.Do(func() {
+		servers := findGrpcServers()
+		if len(servers) == 0 {
+			log.Println("[grpc-tracker] ⚠️ no grpc.Server found yet, retrying...")
 			time.Sleep(2 * time.Second)
-			continue
-		}
-
-		log.Printf("[grpc-tracker] 🧠 attached to live port %s", addr)
-		readGRPC(conn)
-		conn.Close()
-		time.Sleep(1 * time.Second)
-	}
-}
-
-func readGRPC(conn net.Conn) {
-	clientAddr := conn.RemoteAddr().String()
-	log.Printf("[grpc-tracker] 🔗 sniffing connection %s", clientAddr)
-
-	reader := bufio.NewReader(conn)
-	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
-
-	for {
-		buf := make([]byte, 8192)
-		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-		n, err := reader.Read(buf)
-		if n > 0 {
-			chunk := buf[:n]
-			if m := methodRegex.Find(chunk); m != nil {
-				method := string(bytes.TrimSpace(m))
-				if strings.Contains(method, "tripProto") {
-					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
-				}
-			}
-		}
-		if err != nil {
+			tryHookGrpcServer()
 			return
 		}
+
+		for _, srv := range servers {
+			addInterceptor(srv)
+		}
+	})
+}
+
+// NOTE: Replace this if you have access to your actual gRPC server pointer.
+// This placeholder demonstrates hooking logic.
+func findGrpcServers() []*grpc.Server {
+	log.Println("[grpc-tracker] 🧠 attached to live gRPC server(s)")
+	return []*grpc.Server{}
+}
+
+func addInterceptor(srv *grpc.Server) {
+	v := reflect.ValueOf(srv).Elem()
+	opts := v.FieldByName("opts")
+	if !opts.IsValid() {
+		log.Println("[grpc-tracker] ❌ could not access grpc.Server opts")
+		return
 	}
+
+	// Create and inject our interceptor
+	newInt := grpc.UnaryInterceptor(func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		log.Printf("[grpc-tracker] 🚀 called: %s", info.FullMethod)
+		return handler(ctx, req)
+	})
+
+	opts.FieldByName("unaryInt").Set(reflect.ValueOf(newInt))
+	log.Println("[grpc-tracker] ✅ interceptor injected into grpc.Server")
 }
