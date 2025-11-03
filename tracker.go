@@ -142,95 +142,75 @@
 // 	go startProxy()
 // }
 
-package grpcspy
+package grpcsniffer
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"net"
-	"os"
 	"strings"
 )
 
+const (
+	listenPort = 4430 // port your app uses in Postman
+	targetPort = 4440 // internal forwarding port to your real gRPC server
+)
+
 func init() {
-	go attachToPort()
-}
+	go func() {
+		log.Printf("[grpc-sniffer] Listening on :%d → forwarding to :%d", listenPort, targetPort)
 
-func attachToPort() {
-	port := os.Getenv("GRPC_PORT")
-	if port == "" {
-		port = "4430" // default
-	}
-
-	log.Printf("[grpc-spy] 🧠 intercepting live gRPC traffic on :%s", port)
-
-	// Start a transparent proxy on an alternate port (e.g. 4431)
-	proxyPort := "4431"
-
-	// Move real server to 4431 manually or via env config
-	ln, err := net.Listen("tcp", ":"+proxyPort)
-	if err != nil {
-		log.Printf("[grpc-spy] ❌ failed to listen: %v", err)
-		return
-	}
-
-	for {
-		clientConn, err := ln.Accept()
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", listenPort))
 		if err != nil {
-			continue
+			log.Printf("[grpc-sniffer] failed to bind port: %v", err)
+			return
 		}
-		go handleConn(clientConn, port)
-	}
+
+		for {
+			clientConn, err := ln.Accept()
+			if err != nil {
+				log.Printf("[grpc-sniffer] accept error: %v", err)
+				continue
+			}
+
+			go handleConn(clientConn)
+		}
+	}()
 }
 
-func handleConn(clientConn net.Conn, realPort string) {
-	serverConn, err := net.Dial("tcp", "127.0.0.1:"+realPort)
+func handleConn(clientConn net.Conn) {
+	defer clientConn.Close()
+
+	serverConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", targetPort))
 	if err != nil {
-		log.Printf("[grpc-spy] ❌ dial backend failed: %v", err)
-		clientConn.Close()
+		log.Printf("[grpc-sniffer] dial backend error: %v", err)
 		return
 	}
+	defer serverConn.Close()
 
-	// read first bytes to get HTTP/2 headers
-	go copyAndInspect(clientConn, serverConn, true)
-	go copyAndInspect(serverConn, clientConn, false)
-}
+	go io.Copy(serverConn, clientConn)
 
-func copyAndInspect(src, dst net.Conn, inspect bool) {
-	reader := bufio.NewReader(src)
-	buf := make([]byte, 8192)
-
+	// Read back from server to client, sniff for gRPC method names
+	reader := bufio.NewReader(serverConn)
 	for {
-		n, err := reader.Read(buf)
+		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("[grpc-spy] read error: %v", err)
+				log.Printf("[grpc-sniffer] read error: %v", err)
 			}
 			return
 		}
 
-		if inspect {
-			findGrpcMethod(buf[:n])
-		}
-
-		_, err = dst.Write(buf[:n])
-		if err != nil {
-			return
-		}
-	}
-}
-
-func findGrpcMethod(data []byte) {
-	// crude pattern matching for :path header in HTTP/2 frames
-	if bytes.Contains(data, []byte(":path")) {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
-			if strings.Contains(line, ":path") {
-				fmt.Printf("[grpc-spy] 🚀 called %s\n", strings.TrimSpace(line))
+		if strings.Contains(line, "/") {
+			// rough heuristic to extract gRPC service/method path
+			if strings.Contains(line, "grpc") || strings.Contains(line, "HTTP/2") {
+				continue
 			}
+			fmt.Printf("[grpc-sniffer] possible service call: %s\n", strings.TrimSpace(line))
 		}
+
+		clientConn.Write([]byte(line))
 	}
 }
