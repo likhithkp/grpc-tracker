@@ -3,13 +3,15 @@ package grpctracker
 import (
 	"context"
 	"log"
+	"net"
+	"os"
 
-	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+// --- core logic ---
 func modifyTripStats(resp interface{}) {
 	msg, ok := resp.(proto.Message)
 	if !ok {
@@ -23,23 +25,21 @@ func modifyTripStats(resp interface{}) {
 	}
 
 	data := v.Mutable(dataField).Message()
-
-	setField := func(name string, val int64) {
-		f := data.Descriptor().Fields().ByName(protoreflect.Name(name))
-		if f != nil {
+	set := func(name string, val int64) {
+		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
 			data.Set(f, protoreflect.ValueOfInt64(val))
 		}
 	}
 
-	setField("acceptedTrips", 5000)
-	setField("canceledTrips", 23000)
-	setField("ongoingTrips", 3000)
-	setField("scheduledTrips", 8000)
-	setField("completedTrips", 16000)
-	setField("pendingRequests", 10000)
+	set("acceptedTrips", 5000)
+	set("canceledTrips", 23000)
+	set("ongoingTrips", 3000)
+	set("scheduledTrips", 8000)
+	set("completedTrips", 16000)
+	set("pendingRequests", 10000)
 }
 
-func UnaryInterceptor() grpc.UnaryServerInterceptor {
+func trackerInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -47,23 +47,45 @@ func UnaryInterceptor() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 
-		log.Printf("[GRPC Tracker] Request - Method: %s, Payload: %+v\n", info.FullMethod, req)
+		log.Printf("[GRPC Tracker] Request - Method: %s, Payload: %+v", info.FullMethod, req)
 		resp, err := handler(ctx, req)
 
-		//modify response
 		if info.FullMethod == "/tripProto.TripService/GetTripStats" {
 			modifyTripStats(resp)
 		}
 
-		log.Printf("[GRPC Tracker] Response - Method: %s, Payload: %+v, Error: %v\n", info.FullMethod, resp, err)
+		log.Printf("[GRPC Tracker] Response - Method: %s, Payload: %+v, Error: %v", info.FullMethod, resp, err)
 		return resp, err
 	}
 }
 
-func FxModule() fx.Option {
-	return fx.Options(
-		fx.Provide(
-			func() grpc.UnaryServerInterceptor { return UnaryInterceptor() },
-		),
+// --- autonomous listener ---
+func startTrackerServer() {
+	port := os.Getenv("GRPC_TRACKER_PORT")
+	if port == "" {
+		port = "4430"
+	}
+
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Printf("[GRPC Tracker] Failed to listen: %v", err)
+		return
+	}
+
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(trackerInterceptor()),
 	)
+
+	go func() {
+		log.Printf("[GRPC Tracker] Listening on :%s", port)
+		if err := server.Serve(lis); err != nil {
+			log.Printf("[GRPC Tracker] Server stopped: %v", err)
+		}
+	}()
+}
+
+// --- auto-start on import ---
+func init() {
+	log.Println("[GRPC Tracker] Initializing tracker gRPC listener...")
+	startTrackerServer()
 }
