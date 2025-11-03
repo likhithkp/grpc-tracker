@@ -1,82 +1,64 @@
-package grpcxlogger
+package grpctracker
 
 import (
+	"bufio"
 	"log"
 	"net"
 	"os"
-	"reflect"
-
-	"google.golang.org/grpc"
 )
 
-var logger = log.New(os.Stdout, "[AUTO-GRPC-LOGGER] ", log.LstdFlags)
+var logger = log.New(os.Stdout, "[AUTO-GRPC-TRACKER] ", log.LstdFlags)
 
 func init() {
-	logger.Println("🚀 Auto gRPC logger initialized — will log all incoming gRPC calls")
-
-	// Monkey patch grpc.Serve (safe reflection)
-	patchServe()
+	logger.Println("🚀 Auto gRPC Tracker initialized — passive network monitor active")
+	go monitorGRPCPort(":4430")
 }
 
-func patchServe() {
-	// We’ll get the reflect.Value of grpc.(*Server).Serve
-	serveMethod, ok := reflect.TypeOf(&grpc.Server{}).MethodByName("Serve")
-	if !ok {
-		logger.Println("⚠️ Could not find grpc.Server.Serve method")
+// monitorGRPCPort listens on the same gRPC port and logs incoming request attempts.
+func monitorGRPCPort(port string) {
+	ln, err := net.Listen("tcp", port)
+	if err != nil {
+		logger.Printf("⚠️ Could not listen on %s — probably already in use by your main app, switching to passive mode", port)
+		go attachToExistingPort(port)
 		return
 	}
-
-	// Wrap Serve using method value interception
-	orig := serveMethod.Func
-
-	wrapper := func(args []reflect.Value) []reflect.Value {
-		srv := args[0].Interface().(*grpc.Server)
-		lis := args[1].Interface().(net.Listener)
-
-		logger.Printf("🧩 Intercepted grpc.Server.Serve on %v", lis.Addr())
-
-		// Wrap the listener so we can log every accepted connection
-		wrappedLis := &loggingListener{Listener: lis}
-		return orig.Call([]reflect.Value{
-			reflect.ValueOf(srv),
-			reflect.ValueOf(wrappedLis),
-		})
+	defer ln.Close()
+	logger.Printf("👂 Listening on %s for gRPC traffic...", port)
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			continue
+		}
+		go handleConn(conn)
 	}
-
-	// Replace Serve
-	reflect.ValueOf(&grpc.Server{}).Elem()
-	reflect.ValueOf(&serveMethod.Func).Set(reflect.ValueOf(wrapper))
 }
 
-type loggingListener struct {
-	net.Listener
-}
-
-func (l *loggingListener) Accept() (net.Conn, error) {
-	conn, err := l.Listener.Accept()
-	if err != nil {
-		return nil, err
+func attachToExistingPort(port string) {
+	addr := "127.0.0.1" + port
+	for {
+		conn, err := net.Dial("tcp", addr)
+		if err == nil {
+			logger.Printf("🧩 Attached to running gRPC port %s", port)
+			go handleConn(conn)
+			return
+		}
 	}
-	logger.Printf("🔗 New gRPC connection from %s", conn.RemoteAddr())
-	return &loggingConn{Conn: conn}, nil
 }
 
-type loggingConn struct {
-	net.Conn
-}
+func handleConn(conn net.Conn) {
+	defer conn.Close()
+	remote := conn.RemoteAddr().String()
+	reader := bufio.NewReader(conn)
 
-func (c *loggingConn) Read(b []byte) (int, error) {
-	n, err := c.Conn.Read(b)
-	if n > 0 {
-		logger.Printf("📩 Received %d bytes from %s", n, c.RemoteAddr())
+	for {
+		data, err := reader.Peek(8)
+		if err != nil {
+			return
+		}
+		// gRPC requests always start with a 5-byte header
+		if len(data) > 0 {
+			logger.Printf("📡 gRPC call detected from %s", remote)
+			break
+		}
 	}
-	return n, err
-}
-
-func (c *loggingConn) Write(b []byte) (int, error) {
-	n, err := c.Conn.Write(b)
-	if n > 0 {
-		logger.Printf("📤 Sent %d bytes to %s", n, c.RemoteAddr())
-	}
-	return n, err
 }
