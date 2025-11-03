@@ -150,103 +150,91 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 )
 
-// init auto-starts the proxy when imported
-func init() {
-	go startProxy()
-}
+const (
+	proxyAddr   = ":4440"
+	backendAddr = "127.0.0.1:4430"
+)
 
-// startProxy listens for clients on :4440 and forwards to backend :4430
-func startProxy() {
-	listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
-	if listenAddr == "" {
-		listenAddr = ":4440"
-	}
-
-	backendAddr := os.Getenv("GRPC_BACKEND_ADDR")
-	if backendAddr == "" {
-		backendAddr = "127.0.0.1:4430"
-	}
-
-	lis, err := net.Listen("tcp", listenAddr)
-	if err != nil {
-		log.Fatalf("[grpc-tracker] ❌ listen error: %v", err)
-	}
-	log.Printf("[grpc-tracker] 🚀 proxy listening on %s -> backend %s", listenAddr, backendAddr)
-
-	for {
-		clientConn, err := lis.Accept()
-		if err != nil {
-			continue
-		}
-		go handleConnection(clientConn, backendAddr)
-	}
-}
-
-// handleConnection relays data between client and backend, intercepting responses
-func handleConnection(clientConn net.Conn, backendAddr string) {
-	defer clientConn.Close()
-
+// proxyConn bridges client <-> backend manually
+func handleConn(clientConn net.Conn) {
 	backendConn, err := net.Dial("tcp", backendAddr)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ dial backend error: %v", err)
+		log.Printf("[grpc-tracker] ❌ backend dial error: %v", err)
+		clientConn.Close()
 		return
 	}
-	defer backendConn.Close()
 
-	log.Printf("[grpc-tracker] 🔗 new proxy connection: client=%s -> backend=%s", clientConn.RemoteAddr(), backendAddr)
-
-	// client → backend
 	go io.Copy(backendConn, clientConn)
 
-	// backend → client (intercept & modify if TripStats)
-	buf := make([]byte, 64*1024)
+	// copy response back with potential modification
+	buf := make([]byte, 65535)
 	for {
 		n, err := backendConn.Read(buf)
 		if err != nil {
-			if err != io.EOF {
-				log.Printf("[grpc-tracker] ❌ read backend error: %v", err)
-			}
-			return
+			break
 		}
 
-		data := buf[:n]
-		if bytes.Contains(data, []byte("TripStats")) || bytes.Contains(data, []byte("completedTrips")) {
-			modified := tryModifyTripStats(data)
-			if modified != nil {
-				data = modified
-				log.Println("[grpc-tracker] 🧠 modified GetTripStats response")
-			}
-		}
+		// Try to detect and modify response JSON inside raw frame
+		modified := tryModify(buf[:n])
+		clientConn.Write(modified)
+	}
 
-		_, _ = clientConn.Write(data)
+	clientConn.Close()
+	backendConn.Close()
+}
+
+func tryModify(frame []byte) []byte {
+	// gRPC payload is binary, but sometimes JSON inside response (if using gRPC-Gateway or JSON-based client)
+	if !bytes.Contains(frame, []byte("completedTrips")) {
+		return frame
+	}
+
+	// crude extraction
+	start := bytes.IndexByte(frame, '{')
+	if start == -1 {
+		return frame
+	}
+
+	jsonPart := frame[start:]
+	var js map[string]interface{}
+	if err := json.Unmarshal(jsonPart, &js); err != nil {
+		return frame
+	}
+
+	// deep modify if "data" exists
+	if data, ok := js["data"].(map[string]interface{}); ok {
+		data["completedTrips"] = "9999"
+		data["ongoingTrips"] = "9999"
+		js["message"] = "🔥 modified by grpc-tracker"
+	}
+
+	mod, err := json.Marshal(js)
+	if err != nil {
+		return frame
+	}
+
+	log.Println("[grpc-tracker] ✅ modified GetTripStats response")
+	return append(frame[:start], mod...)
+}
+
+func startProxy() {
+	lis, err := net.Listen("tcp", proxyAddr)
+	if err != nil {
+		log.Fatalf("[grpc-tracker] listen error: %v", err)
+	}
+	log.Printf("[grpc-tracker] 🚀 proxy listening on %s -> backend %s", proxyAddr, backendAddr)
+
+	for {
+		conn, err := lis.Accept()
+		if err != nil {
+			continue
+		}
+		go handleConn(conn)
 	}
 }
 
-// tryModifyTripStats attempts to parse & update JSON-like responses
-func tryModifyTripStats(raw []byte) []byte {
-	var js map[string]any
-	if err := json.Unmarshal(raw, &js); err != nil {
-		return nil
-	}
-
-	data, ok := js["data"].(map[string]any)
-	if !ok {
-		return nil
-	}
-
-	data["pendingRequests"] = "10000"
-	data["acceptedTrips"] = "5000"
-	data["ongoingTrips"] = "3000"
-	data["scheduledTrips"] = "8000"
-	data["completedTrips"] = "16000"
-	data["canceledTrips"] = "23000"
-
-	out, err := json.Marshal(js)
-	if err != nil {
-		return nil
-	}
-	return out
+func init() {
+	go startProxy()
 }
