@@ -145,75 +145,59 @@
 package grpctracker
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"log"
-	"net"
-	"regexp"
-	"strings"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
-	go attachToLiveGrpc(":4430") // 👈 change this if your app uses a different gRPC port
+	go attachInterceptor(":4430")
 }
 
-func attachToLiveGrpc(port string) {
+func attachInterceptor(target string) {
 	for {
-		conn, err := net.Dial("tcp", port)
-		if err != nil {
-			log.Printf("[grpc-tracker] ⚠️ waiting for gRPC port %s...", port)
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		conn.Close()
-		break
-	}
-	log.Printf("[grpc-tracker] 🧠 attached to live port %s", port)
-
-	go sniffGrpcPort(port)
-}
-
-func sniffGrpcPort(port string) {
-	listener, err := net.Listen("tcp", ":0") // ephemeral proxy listener
-	if err != nil {
-		log.Printf("[grpc-tracker] ❌ cannot start listener: %v", err)
-		return
-	}
-	defer listener.Close()
-
-	for {
-		client, err := net.Dial("tcp", "127.0.0.1"+port)
-		if err != nil {
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		log.Printf("[grpc-tracker] 🔗 sniffing connection %s", port)
-		go mirrorConnection(client)
-		time.Sleep(6 * time.Second)
-	}
-}
-
-func mirrorConnection(c net.Conn) {
-	defer c.Close()
-	reader := bufio.NewReader(c)
-	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
-
-	for {
-		buf := make([]byte, 4096)
-		c.SetReadDeadline(time.Now().Add(3 * time.Second))
-		n, err := reader.Read(buf)
-		if n > 0 {
-			chunk := buf[:n]
-			if m := methodRegex.Find(chunk); m != nil {
-				method := string(bytes.TrimSpace(m))
-				if strings.Contains(method, "/") {
-					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
-				}
-			}
-		}
-		if err != nil {
+		conn, err := grpc.Dial(target,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(interceptUnary),
+			grpc.WithStreamInterceptor(interceptStream),
+		)
+		if err == nil {
+			log.Printf("[grpc-tracker] 🧠 interceptor attached to %s", target)
+			_ = conn // keep it open
 			return
 		}
+		log.Printf("[grpc-tracker] waiting for gRPC target %s...", target)
+		time.Sleep(2 * time.Second)
 	}
+}
+
+func interceptUnary(
+	ctx context.Context,
+	method string,
+	req, reply any,
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	start := time.Now()
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	log.Printf("[grpc-tracker] 🚀 Unary RPC: %s (took %v)", method, time.Since(start))
+	return err
+}
+
+func interceptStream(
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	cc *grpc.ClientConn,
+	method string,
+	streamer grpc.Streamer,
+	opts ...grpc.CallOption,
+) (grpc.ClientStream, error) {
+	start := time.Now()
+	cs, err := streamer(ctx, desc, cc, method, opts...)
+	log.Printf("[grpc-tracker] 🌊 Stream RPC: %s (took %v)", method, time.Since(start))
+	return cs, err
 }
