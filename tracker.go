@@ -124,11 +124,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// --- Modify response (TripStats) ---
+// --- modify GetTripStats ---
 func modifyTripStats(resp proto.Message) {
 	if resp == nil {
 		return
 	}
+
 	v := resp.ProtoReflect()
 	dataField := v.Descriptor().Fields().ByName("data")
 	if dataField == nil {
@@ -137,8 +138,7 @@ func modifyTripStats(resp proto.Message) {
 
 	data := v.Mutable(dataField).Message()
 	set := func(name string, val int64) {
-		f := data.Descriptor().Fields().ByName(protoreflect.Name(name))
-		if f != nil {
+		if f := data.Descriptor().Fields().ByName(protoreflect.Name(name)); f != nil {
 			data.Set(f, protoreflect.ValueOfInt64(val))
 		}
 	}
@@ -149,24 +149,23 @@ func modifyTripStats(resp proto.Message) {
 	set("scheduledTrips", 8000)
 	set("completedTrips", 16000)
 	set("pendingRequests", 10000)
-
 	log.Println("[grpc-tracker] ✅ Modified GetTripStats response fields")
 }
 
-// --- Proxy handler ---
+// --- proxy core ---
 func startProxy(listenAddr, backendAddr string) error {
 	lis, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
 	}
 
-	server := grpc.NewServer(
+	s := grpc.NewServer(
 		grpc.UnknownServiceHandler(func(srv interface{}, serverStream grpc.ServerStream) error {
 			fullMethod, _ := grpc.MethodFromServerStream(serverStream)
 
 			conn, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
-				log.Printf("[grpc-tracker] dial backend failed: %v", err)
+				log.Printf("[grpc-tracker] backend dial failed: %v", err)
 				return err
 			}
 			defer conn.Close()
@@ -176,12 +175,7 @@ func startProxy(listenAddr, backendAddr string) error {
 				ctx = metadata.NewOutgoingContext(ctx, md)
 			}
 
-			desc := &grpc.StreamDesc{
-				StreamName:    "proxy",
-				ClientStreams: true,
-				ServerStreams: true,
-			}
-
+			desc := &grpc.StreamDesc{ServerStreams: true, ClientStreams: true}
 			clientStream, err := conn.NewStream(ctx, desc, fullMethod)
 			if err != nil {
 				log.Printf("[grpc-tracker] create backend stream failed: %v", err)
@@ -193,7 +187,7 @@ func startProxy(listenAddr, backendAddr string) error {
 			// client → backend
 			go func() {
 				for {
-					req := new(proto.Message)
+					req := new(any)
 					if err := serverStream.RecvMsg(req); err != nil {
 						errc <- err
 						return
@@ -205,28 +199,30 @@ func startProxy(listenAddr, backendAddr string) error {
 				}
 			}()
 
-			// backend → client
+			// backend → client (where we modify)
 			go func() {
 				for {
-					var resp proto.Message
-					if err := clientStream.RecvMsg(&resp); err != nil {
+					var msg any
+					if err := clientStream.RecvMsg(&msg); err != nil {
 						errc <- err
 						return
 					}
 
+					// modify if it's GetTripStats and a valid proto.Message
 					if fullMethod == "/tripProto.TripService/GetTripStats" {
-						modifyTripStats(resp)
+						if pm, ok := msg.(proto.Message); ok {
+							modifyTripStats(pm)
+						}
 					}
 
-					if err := serverStream.SendMsg(resp); err != nil {
+					if err := serverStream.SendMsg(msg); err != nil {
 						errc <- err
 						return
 					}
 				}
 			}()
 
-			err = <-errc
-			if err != io.EOF {
+			if err := <-errc; err != io.EOF {
 				return err
 			}
 			return nil
@@ -234,10 +230,10 @@ func startProxy(listenAddr, backendAddr string) error {
 	)
 
 	log.Printf("[grpc-tracker] 🚀 Listening on %s → forwarding to %s", listenAddr, backendAddr)
-	return server.Serve(lis)
+	return s.Serve(lis)
 }
 
-// --- Auto-start on import ---
+// --- start automatically ---
 func init() {
 	go func() {
 		listenAddr := os.Getenv("GRPC_LISTEN_ADDR")
