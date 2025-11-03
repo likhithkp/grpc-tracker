@@ -86,16 +86,16 @@ func trackerInterceptor(
 	start := time.Now()
 
 	// Log every incoming gRPC method call
-	log.Printf("[grpc-tracker] ➡️  Incoming gRPC call: %s", info.FullMethod)
+	log.Printf("[grpc-tracker] Incoming gRPC call: %s", info.FullMethod)
 
 	// Call the original handler
 	resp, err = handler(ctx, req)
 
 	duration := time.Since(start)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ Error in %s: %v (%s)", info.FullMethod, err, duration)
+		log.Printf("[grpc-tracker] Error in %s: %v (%s)", info.FullMethod, err, duration)
 	} else {
-		log.Printf("[grpc-tracker] ✅ Completed %s in %s", info.FullMethod, duration)
+		log.Printf("[grpc-tracker] Completed %s in %s", info.FullMethod, duration)
 	}
 
 	return resp, err
@@ -111,7 +111,7 @@ func init() {
 	go func() {
 		lis, err := net.Listen("tcp", addr)
 		if err != nil {
-			log.Printf("[grpc-tracker] ❌ Failed to listen on %s: %v", addr, err)
+			log.Printf("[grpc-tracker] Failed to listen on %s: %v", addr, err)
 			return
 		}
 
@@ -120,10 +120,10 @@ func init() {
 			grpc.UnaryInterceptor(trackerInterceptor),
 		)
 
-		log.Printf("[grpc-tracker] 🚀 Listening on %s", addr)
+		log.Printf("[grpc-tracker] Listening on %s", addr)
 
 		if err := server.Serve(lis); err != nil {
-			log.Printf("[grpc-tracker] ❌ Serve error: %v", err)
+			log.Printf("[grpc-tracker] Serve error: %v", err)
 		}
 	}()
 }
