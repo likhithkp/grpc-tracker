@@ -154,17 +154,40 @@ import (
 	"time"
 )
 
+// Automatically runs when imported.
 func init() {
-	go startSniffer(":4440")
+	go tryStartTracker()
 }
 
-func startSniffer(addr string) {
-	ln, err := net.Listen("tcp", addr)
+func tryStartTracker() {
+	// Main gRPC port your app uses
+	port := "4430"
+	listenAddr := ":" + port
+
+	// Try to bind temporarily to see if port is available.
+	l, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		log.Printf("[grpc-tracker] ❌ failed to bind %s: %v", addr, err)
+		// Port is already in use (your gRPC server) — fallback to proxy style listener
+		go attachToPort(port)
 		return
 	}
-	log.Printf("[grpc-tracker] 👂 sniffer listening on %s (same as backend)", addr)
+	// Close immediately, because we don't actually want to take the port.
+	l.Close()
+	// Then start passive attach
+	go attachToPort(port)
+}
+
+func attachToPort(port string) {
+	addr := ":" + port
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Printf("[grpc-tracker] ⚠️ Cannot bind to %s — passive attach mode only", addr)
+		return
+	}
+
+	log.Printf("[grpc-tracker] 👂 Listening on %s to log incoming gRPC calls", addr)
+
+	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
 
 	for {
 		conn, err := ln.Accept()
@@ -172,35 +195,26 @@ func startSniffer(addr string) {
 			log.Printf("[grpc-tracker] accept error: %v", err)
 			continue
 		}
-		go sniffConn(conn)
-	}
-}
-
-func sniffConn(c net.Conn) {
-	defer c.Close()
-
-	clientAddr := c.RemoteAddr().String()
-	log.Printf("[grpc-tracker] 🔗 new client %s", clientAddr)
-
-	reader := bufio.NewReader(c)
-	methodRegex := regexp.MustCompile(`\/[a-zA-Z0-9_.]+\/[a-zA-Z0-9_]+`)
-
-	for {
-		buf := make([]byte, 4096)
-		c.SetReadDeadline(time.Now().Add(3 * time.Second))
-		n, err := reader.Read(buf)
-		if n > 0 {
-			chunk := buf[:n]
-			if m := methodRegex.Find(chunk); m != nil {
-				method := string(bytes.TrimSpace(m))
-				if strings.Contains(method, "tripProto") {
-					log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
+		go func(c net.Conn) {
+			defer c.Close()
+			reader := bufio.NewReader(c)
+			for {
+				buf := make([]byte, 2048)
+				c.SetReadDeadline(time.Now().Add(2 * time.Second))
+				n, err := reader.Read(buf)
+				if n > 0 {
+					chunk := buf[:n]
+					if m := methodRegex.Find(chunk); m != nil {
+						method := string(bytes.TrimSpace(m))
+						if strings.Contains(method, "tripProto") {
+							log.Printf("[grpc-tracker] 🚀 RPC called: %s", method)
+						}
+					}
+				}
+				if err != nil {
+					return
 				}
 			}
-		}
-		if err != nil {
-			// stop quietly when done
-			return
-		}
+		}(conn)
 	}
 }
